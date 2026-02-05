@@ -1,7 +1,7 @@
-import { existsSync, readdirSync } from "node:fs";
-import path from "node:path";
-import { chdir } from "node:process";
 import * as p from "@clack/prompts";
+import { existsSync, lstatSync, readdirSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
+import { chdir } from "node:process";
 import type { CreateOptions, Path } from "@/commands/create";
 import { createPackageJSON, validateProjectName, writePackageJSON } from "@/create/package";
 import { setupTemplateFiles } from "@/create/template";
@@ -26,6 +26,7 @@ import {
   packageManagers,
 } from "@/utils/package-manager";
 import { tryGitInit } from "@/utils/git";
+import { VALID_PROJECT_FILES } from "@/constants";
 
 const isOnline = await getOnline();
 
@@ -60,16 +61,37 @@ export async function createProject(cwd: Path, options: CreateOptions) {
 
           if (!existsSync(directory)) return;
 
-          const files = readdirSync(directory);
-          const hasNonIgnoredFiles = files.some((file) => !file.startsWith(".git"));
-          if (!hasNonIgnoredFiles) return;
+          const root = resolve(directory);
+          const name = basename(root);
+
+          const conflicts = readdirSync(root).filter(
+            (file) => !VALID_PROJECT_FILES.has(file) && !file.endsWith(".iml"),
+          );
+
+          if (conflicts.length === 0) return;
+
+          p.log.warn(`The directory ${pc.green(name)} contains files that could conflict:`);
+
+          const conflictList = conflicts
+            .map((file) => {
+              try {
+                const stats = lstatSync(join(root, file));
+                return stats.isDirectory() ? ` ${pc.blue(file)}/` : ` ${file}`;
+              } catch {
+                return `${file}`;
+              }
+            })
+            .join("\n");
+
+          p.note(conflictList, "Potential Conflicts");
 
           const force = await p.confirm({
-            message: "Directory not empty. Continue?",
+            message: `Directory is not empty. ${pc.yellow("Overwrite and continue?")}`,
             initialValue: false,
           });
+
           if (p.isCancel(force) || !force) {
-            p.cancel("Exiting.");
+            p.cancel("Operation cancelled.");
             process.exit(0);
           }
         },
@@ -140,10 +162,10 @@ export async function createProject(cwd: Path, options: CreateOptions) {
       },
     );
 
-  const projectPath = path.resolve(directory);
+  const projectPath = resolve(directory);
   const projectName = await p.text({
     message: "Confirm or enter the package name:",
-    initialValue: path.basename(projectPath),
+    initialValue: basename(projectPath),
     validate: validateProjectName,
   });
 

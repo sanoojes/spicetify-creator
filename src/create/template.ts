@@ -25,76 +25,54 @@ const kv = ({ name, language, framework, linter, packageManager, template }: Opt
 
 export const COMMON_FILES: FileSlice = (opts) => [
   {
-    from: "shared/README.template.md",
+    from: "README.template.md",
     to: "README.md",
     action: {
       modify(c, opts) {
         return replace(c, kv(opts));
       },
     },
-    isGlobal: true,
+    isShared: true,
   },
-  { from: "shared/.gitignore", to: ".gitignore", isGlobal: true },
+  { from: ".gitignore", to: ".gitignore", isShared: true },
   {
-    from: `shared/spice.config.${ext(opts.language)}`,
+    from: `spice.config.${ext(opts.language)}`,
     to: `spice.config.${ext(opts.language)}`,
     action: {
       modify(c, opts) {
         return replace(c, kv(opts));
       },
     },
-    isGlobal: true,
+    isShared: true,
   },
   {
-    from: "shared/app.css",
+    from: "app.css",
     to: "src/app.css",
     action: {
       modify(c, opts) {
         return replace(c, kv(opts));
       },
     },
-    isGlobal: true,
+    isShared: true,
   },
 ];
 
 export const LANGUAGE_FILES: FileRegistry<Options["language"]> = {
-  js: [
-    {
-      from: "shared/jsconfig.json",
-      to: "jsconfig.json",
-      isGlobal: true,
-    },
-  ],
-  ts: [
-    {
-      from: "shared/tsconfig.json",
-      to: "tsconfig.json",
-      isGlobal: true,
-    },
-  ],
+  js: [{ from: "jsconfig.json", to: "jsconfig.json", isShared: true }],
+  ts: [{ from: "tsconfig.json", to: "tsconfig.json", isShared: true }],
 };
 
 export const FRAMEWORKS: FileRegistry<Options["framework"]> = {
-  react: ({ language }) => [
-    {
-      from: `src/app.${ext(language)}x`,
-      to: `src/app.${ext(language)}x`,
-    },
-  ],
-  vanilla: ({ language }) => [
-    {
-      from: `src/app.${ext(language)}`,
-      to: `src/app.${ext(language)}`,
-    },
-  ],
+  react: ({ language }) => [{ from: `src/app.${ext(language)}x`, to: `src/app.${ext(language)}x` }],
+  vanilla: ({ language }) => [{ from: `src/app.${ext(language)}`, to: `src/app.${ext(language)}` }],
 };
 
 export const LINTERS: FileRegistry<Options["linter"]> = {
-  biome: [{ from: "shared/biome.json", to: "biome.json", isGlobal: true }],
+  biome: [{ from: "biome.json", to: "biome.json", isShared: true }],
   eslint: ({ language }) => [
     { from: `eslint.config.${ext(language)}`, to: `eslint.config.${ext(language)}` },
   ],
-  oxlint: [{ from: "shared/.oxlintrc.json", to: ".oxlintrc.json", isGlobal: true }],
+  oxlint: [{ from: ".oxlintrc.json", to: ".oxlintrc.json", isShared: true }],
 };
 
 export function setupTemplateFiles(options: Options, targetDir: string) {
@@ -114,7 +92,11 @@ export function setupTemplateFiles(options: Options, targetDir: string) {
   ];
 
   for (const file of files) {
-    const src = file.isGlobal ? join(templateRoot, file.from) : join(fromDir, file.from);
+    const src = (() => {
+      if (file.isGlobal) return join(templateRoot, file.from); // not used but might come in handy
+      if (file.isShared) return join(templateRoot, "shared", file.from);
+      return join(fromDir, file.from);
+    })();
     const dest = join(targetDir, file.to);
 
     if (!existsSync(src)) {

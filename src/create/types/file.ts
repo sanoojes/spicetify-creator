@@ -7,11 +7,10 @@ export interface FileAction {
 export type FileMapping = {
   from: string;
   to: string;
-  isGlobal?: boolean;
   action?: {
     modify?: (contents: string, options: Options) => string;
   };
-};
+} & ({ isGlobal?: false; isShared?: boolean } | { isGlobal?: true; isShared?: false });
 
 export type FileSlice = FileMapping[] | ((options: Options) => FileMapping[]);
 

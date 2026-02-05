@@ -71,7 +71,9 @@ const INTERSECTIONS: IntersectionTemplate = {
 export function createPackageJSON(options: Options): PackageJSON {
   const result: PackageJSON = {
     name: options.name,
+    description: `A Spicetify ${options.template} created with @spicetify/creator`,
     version: "0.0.1",
+    type: "module",
     private: true,
     scripts: {
       sc: "spicetify-creator",

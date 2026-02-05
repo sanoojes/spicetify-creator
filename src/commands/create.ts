@@ -10,6 +10,7 @@ import { logger } from "@/utils/logger";
 export const PathSchema = v.optional(v.string());
 export const OptionsSchema = v.strictObject({
   install: v.boolean(),
+  git: v.boolean(),
   dirCheck: v.boolean(),
   language: v.optional(v.picklist(languageTypes)),
   template: v.optional(v.picklist(templateTypes)),
@@ -45,8 +46,12 @@ export const create = new Command("create")
   .addOption(frameworkOption)
   .addOption(linterOption)
   .addOption(packageManagerOption)
-  .option("--no-install", "Skip installing packages")
-  .option("--no-dir-check", "Even if the folder is not empty, no prompt will be shown")
+  .option("--disable-git, --no-git", "Skip initializing a git repository.")
+  .option("--skip-install, --no-install", "Skip installing packages")
+  .option(
+    "--skip-dir-check, --no-dir-check",
+    "Even if the folder is not empty, no prompt will be shown",
+  )
   .action((path, opts) => {
     try {
       const cwd = safeParse(PathSchema, path);

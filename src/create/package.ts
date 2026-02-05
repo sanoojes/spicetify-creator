@@ -84,6 +84,13 @@ export function createPackageJSON(options: Options): PackageJSON {
     },
   };
 
+  if (options.language === "ts") {
+    result.peerDependencies = {
+      ...result.peerDependencies,
+      typescript: "^5",
+    };
+  }
+
   const slices: (PackageSlice | undefined)[] = [
     FRAMEWORKS[options.framework],
     LINTERS[options.linter],

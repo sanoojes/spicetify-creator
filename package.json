@@ -1,0 +1,80 @@
+{
+  "name": "@spicetify/creator",
+  "version": "0.0.1",
+  "description": "Easily make Spicetify extensions and themes",
+  "keywords": [
+    "cli",
+    "spicetify"
+  ],
+  "bugs": {
+    "url": "https://github.com/sanoojes/spicetify-creator/issues"
+  },
+  "license": "GPL-3.0",
+  "author": "Sanooj E Sanish <mail@sanooj.uk>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanoojes/spicetify-creator"
+  },
+  "bin": {
+    "sc": "./dist/bin.mjs",
+    "spicetify-creator": "./dist/bin.mjs"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "type": "module",
+  "exports": {
+    "./bin": "./dist/bin.mjs",
+    "./client": "./dist/client/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "prepublishOnly": "bun run build",
+    "start": "bun run src/bin.ts",
+    "start:node": "bun run build && node ./dist/bin.mjs",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "@csstools/postcss-minify": "^3.0.0",
+    "autoprefixer": "^10.4.24",
+    "c12": "^3.3.3",
+    "commander": "^14.0.3",
+    "dotenv": "^17.2.3",
+    "esbuild": "^0.27.2",
+    "esbuild-plugin-sass": "^1.0.1",
+    "esbuild-sass-plugin": "^3.6.0",
+    "ini": "^6.0.0",
+    "nanostores": "^1.1.0",
+    "picocolors": "^1.1.1",
+    "postcss": "^8.5.6",
+    "postcss-import": "^16.1.1",
+    "postcss-preset-env": "^11.1.2",
+    "tinyglobby": "^0.2.15",
+    "valibot": "^1.2.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/ini": "^4.1.1",
+    "@types/node": "^25.2.0",
+    "@types/postcss-import": "^14.0.3",
+    "@types/ws": "^8.18.1",
+    "jiti": "^2.6.1",
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "tsdown": "^0.20.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "packageManager": "bun@1.3.4"
+}

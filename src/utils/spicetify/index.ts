@@ -4,9 +4,11 @@ import { join } from "node:path";
 import { parse } from "ini";
 import * as v from "valibot";
 import { type SpicetifyConfig, SpicetifyConfigSchema } from "@/utils/spicetify/schema";
+import { env } from "@/env";
 
 export function runSpice(args: string[]) {
-  return spawnSync("spicetify", args, { encoding: "utf-8" });
+  validateSpicetify(env.spicetifyBin);
+  return spawnSync(env.spicetifyBin, args, { encoding: "utf-8" });
 }
 
 export const getExtensionDir = () => join(getSpiceDataPath(), "Extensions");
@@ -53,4 +55,16 @@ export function getSpiceDataPath(): string {
     throw new Error(`Failed to locate Spicetify config: ${stderr || error?.message}`);
   }
   return stdout.trim();
+}
+
+export function validateSpicetify(bin: string) {
+  const result = spawnSync(bin, ["--version"], { encoding: "utf-8" });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`Invalid spicetify binary "${bin}": ${result.stderr || "unknown error"}`);
+  }
 }

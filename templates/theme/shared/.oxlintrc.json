@@ -32,5 +32,5 @@
     }
   },
   "globals": {},
-  "ignorePatterns": ["templates/**", "src/client/types/spicetify.ts"]
+  "ignorePatterns": ["dist/**"]
 }

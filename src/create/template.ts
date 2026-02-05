@@ -90,11 +90,11 @@ export const FRAMEWORKS: FileRegistry<Options["framework"]> = {
 };
 
 export const LINTERS: FileRegistry<Options["linter"]> = {
-  biome: [{ from: "biome.json", to: "biome.json" }],
+  biome: [{ from: "shared/biome.json", to: "biome.json", isGlobal: true }],
   eslint: ({ language }) => [
     { from: `eslint.config.${ext(language)}`, to: `eslint.config.${ext(language)}` },
   ],
-  oxlint: [{ from: ".oxlintrc.json", to: ".oxlintrc.json" }],
+  oxlint: [{ from: "shared/.oxlintrc.json", to: ".oxlintrc.json", isGlobal: true }],
 };
 
 export function setupTemplateFiles(options: Options, targetDir: string) {

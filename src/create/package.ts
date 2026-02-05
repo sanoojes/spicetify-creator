@@ -36,6 +36,7 @@ const LINTERS: LinterTemplate = {
       "@eslint/js": "^9.39.2",
       "@eslint/css": "^0.14.1",
       globals: "^17.2.0",
+      jiti: "^2.6.1",
     },
   },
   biome: {

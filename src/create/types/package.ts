@@ -8,6 +8,7 @@ export interface PackageJSON {
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
 }
 
 export type PackageSlice = Pick<PackageJSON, "scripts" | "dependencies" | "devDependencies">;

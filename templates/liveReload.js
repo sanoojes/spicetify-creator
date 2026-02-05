@@ -11,17 +11,17 @@
 
     es.addEventListener("change", (e) => {
       const { added, removed, updated } = JSON.parse(e.data);
-      console.log(JSON.parse(e.data))
+      console.log(JSON.parse(e.data));
 
       if (added.length > 0 || removed.length > 0) {
         window.location.reload();
         return;
       }
 
-      const isOnlyCSS = updated.length > 0 && updated.every(file => file.endsWith(".css"));
+      const isOnlyCSS = updated.length > 0 && updated.every((file) => file.endsWith(".css"));
 
       if (isOnlyCSS) {
-        updated.forEach(file => {
+        updated.forEach((file) => {
           const link = document.getElementById(CSS_ID);
           if (link) {
             const next = link.cloneNode();

@@ -60,14 +60,16 @@ export const COMMON_FILES: FileSlice = (opts) => [
 export const LANGUAGE_FILES: FileRegistry<Options["language"]> = {
   js: [
     {
-      from: "jsconfig.json",
+      from: "shared/jsconfig.json",
       to: "jsconfig.json",
+      isGlobal: true,
     },
   ],
   ts: [
     {
-      from: "tsconfig.json",
+      from: "shared/tsconfig.json",
       to: "tsconfig.json",
+      isGlobal: true,
     },
   ],
 };

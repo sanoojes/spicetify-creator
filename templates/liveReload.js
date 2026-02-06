@@ -37,7 +37,8 @@
 
     es.onerror = () => {
       es.close();
-      window.location.reload();
+      console.warn("Hot reload disconnected. Retrying in 1s...");
+      setTimeout(connect, 1000);
     };
   };
 
@@ -53,7 +54,7 @@
   script.id = JS_ID;
   script.src = SERVER + JS_PATH;
   script.async = true;
-  script.type = "module"
+  script.type = "module";
   script.defer = true;
   document.body.appendChild(script);
 

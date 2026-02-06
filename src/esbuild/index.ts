@@ -25,6 +25,8 @@ export const defaultBuildOptions: Partial<BuildOptions> = {
   treeShaking: true,
   jsx: "transform",
   format: "esm",
+  platform: "browser",
+  target: ["es2022", "chrome120"],
 };
 
 export const getCommonPlugins = (
@@ -44,11 +46,13 @@ export const getCommonPlugins = (
       minify,
       inline: isExtension,
     }),
+
     plugins.externalGlobal({
       react: "Spicetify.React",
       "react-dom": "Spicetify.ReactDOM",
       "react-dom/client": "Spicetify.ReactDOM",
       "react-dom/server": "Spicetify.ReactDOMServer",
+      "react/jsx-runtime": "Spicetify.ReactJSX",
     }),
 
     plugins.wrapWithLoader({

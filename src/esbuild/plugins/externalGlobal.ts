@@ -1,9 +1,11 @@
 import type { PluginBuild } from "esbuild";
 
-export const externalGlobal = (externals: Record<string, string>) => {
-  const namespace = "spice_internal__external-global";
+export const externalGlobal = (
+  externals: Record<string, string>,
+  namespace = "spicetify-global",
+) => {
   return {
-    name: namespace,
+    name: "spice_internal__external-global",
     setup(build: PluginBuild) {
       build.onResolve(
         {

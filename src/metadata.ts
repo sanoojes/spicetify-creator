@@ -96,3 +96,4 @@ export const frameworks: FrameworkMetadata[] = frameworkTypes.map((name) => ({
 export const frameworkOptions = toOptions(frameworks);
 
 export const liveReloadFilePath = dist(`templates/liveReload.js`, import.meta.url);
+export const templateFilePath = dist("templates/wrapper.js", import.meta.url);

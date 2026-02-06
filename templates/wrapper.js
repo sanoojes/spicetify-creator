@@ -6,7 +6,6 @@
     version: "{{APP_VERSION}}",
     hash: "{{APP_HASH}}",
   };
-  const { id: appId, version: v } = _G[_ID];
   const _wait = (p, a = 0) => new Promise((res, rej) => {
     const i = setInterval(() => {
       if (p()) return (clearInterval(i), res());

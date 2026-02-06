@@ -1,6 +1,9 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { replace } from "@/utils/replace";
+
+export { replace };
 
 export function mkdirp(dir: string): void {
   try {
@@ -13,13 +16,6 @@ export function mkdirp(dir: string): void {
 
 function identity<T>(x: T): T {
   return x;
-}
-
-export function replace(contents: string, kv: Record<string, string>): string {
-  for (const [key, value] of Object.entries(kv)) {
-    contents = contents.replaceAll(key, value);
-  }
-  return contents;
 }
 
 type RenameFn = (basename: string) => string;

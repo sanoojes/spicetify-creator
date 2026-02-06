@@ -1,8 +1,12 @@
-import "./app.css";
+import "@/app.css";
+import { initOnboarding } from "@/components/Onboarding";
 
-await main();
+const config = {
+  projectName: "{{project-name}}",
+  framework: "{{framework}}",
+  language: "{{language}}",
+  packageManager: "{{package-manager}}",
+  linter: "{{linter}}",
+};
 
-async function main() {
-  // Show message on start.
-  Spicetify.showNotification("Hello!");
-}
+initOnboarding(config);

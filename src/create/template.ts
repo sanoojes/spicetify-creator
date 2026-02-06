@@ -59,8 +59,22 @@ export const LANGUAGE_FILES: FileRegistry<Options["language"]> = {
 };
 
 export const FRAMEWORKS: FileRegistry<Options["framework"]> = {
-  react: ({ language }) => [{ from: `src/app.${ext(language)}x`, to: `src/app.${ext(language)}x` }],
-  vanilla: ({ language }) => [{ from: `src/app.${ext(language)}`, to: `src/app.${ext(language)}` }],
+  react: ({ language }) => [
+    { from: `src/app.${ext(language)}x`, to: `src/app.${ext(language)}x`, action },
+    {
+      from: `src/components/Onboarding.${ext(language)}x`,
+      to: `src/components/Onboarding.${ext(language)}x`,
+      action,
+    },
+  ],
+  vanilla: ({ language }) => [
+    { from: `src/app.${ext(language)}`, to: `src/app.${ext(language)}`, action },
+    {
+      from: `src/components/Onboarding.${ext(language)}`,
+      to: `src/components/Onboarding.${ext(language)}`,
+      action,
+    },
+  ],
 };
 
 export const LINTERS: FileRegistry<Options["linter"]> = {

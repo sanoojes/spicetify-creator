@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { log } from "@clack/prompts";
-import { CONFIG_REF_LINK, DOCS_LINK, GITHUB_LINK, SPICETIFY_LINK } from "@/constants";
+import { CONFIG_REF_LINK, DOCS_LINK, GITHUB_LINK, DISCORD_LINK, SPICETIFY_LINK } from "@/constants";
 import type { Options } from "@/create";
-import type { FileMapping, FileRegistry, FileSlice } from "@/create/types/file";
+import type { FileAction, FileMapping, FileRegistry, FileSlice } from "@/create/types/file";
 import { dist, mkdirp, replace } from "@/utils/fs";
 
 const ext = (lang: Options["language"]) => (lang === "ts" ? "ts" : "js");
@@ -18,41 +18,37 @@ const kv = ({ name, language, framework, linter, packageManager, template }: Opt
   "{{language}}": ext(language),
   "{{entry-ext}}": `${ext(language)}${framework === "react" ? "x" : ""}`,
   "{{docs-link}}": DOCS_LINK,
+  "{{get-started-link}}": DOCS_LINK,
+  "{{discord-link}}": DISCORD_LINK,
   "{{github-link}}": GITHUB_LINK,
   "{{spicetify-link}}": SPICETIFY_LINK,
   "{{config-reference-link}}": CONFIG_REF_LINK,
 });
 
+const action: FileAction = {
+  modify(c, opts) {
+    return replace(c, kv(opts));
+  },
+};
+
 export const COMMON_FILES: FileSlice = (opts) => [
   {
     from: "README.template.md",
     to: "README.md",
-    action: {
-      modify(c, opts) {
-        return replace(c, kv(opts));
-      },
-    },
+    action,
     isShared: true,
   },
   { from: ".gitignore", to: ".gitignore", isShared: true },
   {
     from: `spice.config.${ext(opts.language)}`,
     to: `spice.config.${ext(opts.language)}`,
-    action: {
-      modify(c, opts) {
-        return replace(c, kv(opts));
-      },
-    },
+    action,
     isShared: true,
   },
   {
     from: "app.css",
     to: "src/app.css",
-    action: {
-      modify(c, opts) {
-        return replace(c, kv(opts));
-      },
-    },
+    action,
     isShared: true,
   },
 ];

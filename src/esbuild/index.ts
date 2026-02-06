@@ -39,12 +39,10 @@ export const getCommonPlugins = (
 ): Plugin[] => {
   const { template, minify, cache, name, version, buildOptions, outFiles } = opts;
 
-  const isExtension = template === "extension";
-
   return [
     plugins.css({
       minify,
-      inline: isExtension,
+      inline: template === "extension",
     }),
 
     plugins.externalGlobal({

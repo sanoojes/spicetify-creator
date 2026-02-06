@@ -1,15 +1,13 @@
 import type { Options } from "@/create";
 
-export interface FileAction {
+export type FileAction = {
   modify?: (contents: string, options: Options) => string;
-}
+};
 
 export type FileMapping = {
   from: string;
   to: string;
-  action?: {
-    modify?: (contents: string, options: Options) => string;
-  };
+  action?: FileAction;
 } & ({ isGlobal?: false; isShared?: boolean } | { isGlobal?: true; isShared?: false });
 
 export type FileSlice = FileMapping[] | ((options: Options) => FileMapping[]);

@@ -1,6 +1,7 @@
 import { pc } from "@/utils/common";
 
 export const GITHUB_LINK = "https://github.com/sanoojes/spicetify-creator";
+export const DISCORD_LINK = "https://discord.gg/YGkktjdYV8";
 // TODO: create docs
 export const DOCS_LINK = "https://github.com/sanoojes/spicetify-creator";
 export const CONFIG_REF_LINK = "https://github.com/sanoojes/spicetify-creator";

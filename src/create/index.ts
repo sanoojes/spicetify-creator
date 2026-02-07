@@ -165,7 +165,7 @@ export async function createProject(cwd: Path, options: CreateOptions) {
   const projectPath = resolve(directory);
   const projectName = await p.text({
     message: "Confirm or enter the package name:",
-    initialValue: basename(projectPath),
+    initialValue: basename(projectPath).toLowerCase(),
     validate: validateProjectName,
   });
 

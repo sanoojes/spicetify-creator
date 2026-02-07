@@ -90,6 +90,7 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
       "react-dom",
     ],
     plugins: [
+      ...(config.esbuildOptions?.plugins ? config.esbuildOptions.plugins : []),
       ...getCommonPlugins({
         ...config,
         minify,
@@ -101,7 +102,6 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
         },
         outFiles: options.outFiles,
       }),
-      ...(config.esbuildOptions?.plugins ? config.esbuildOptions.plugins : []),
     ],
   };
 

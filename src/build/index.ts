@@ -78,6 +78,7 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
       "react-dom",
     ],
     plugins: [
+      ...(config.esbuildOptions?.plugins ? config.esbuildOptions.plugins : []),
       ...getCommonPlugins({
         ...config,
         minify,
@@ -89,7 +90,6 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
         },
         outFiles,
       }),
-      ...(config.esbuildOptions?.plugins ? config.esbuildOptions.plugins : []),
     ],
   };
 

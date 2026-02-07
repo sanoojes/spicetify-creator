@@ -1,51 +1,28 @@
-import { createLogger, type Logger } from "@/utils/logger";
 import postcssMinify from "@csstools/postcss-minify";
 import autoprefixer from "autoprefixer";
 import type { Plugin } from "esbuild";
-import { sassPlugin } from "esbuild-sass-plugin";
+import { sassPlugin, postcssModules } from "esbuild-sass-plugin";
 import { resolve } from "node:path";
 
-import postcss from "postcss";
 import postcssImport from "postcss-import";
 import postcssPresetEnv from "postcss-preset-env";
 
-type CSSPlugin = { minify: boolean; inline: boolean; logger?: Logger };
-export function css({
-  minify = false,
-  inline = false,
-  logger = createLogger("plugin:css"),
-}: CSSPlugin): Plugin {
-  const postcssPlugins = [autoprefixer, postcssPresetEnv({ stage: 0 })];
+type CSSPlugin = { minify: boolean; inline: boolean };
 
-  if (minify) {
-    postcssPlugins.push(postcssMinify());
-    logger.debug("CSS minification enabled");
-  }
-
+export function css({ minify = false, inline = false }: CSSPlugin): Plugin {
   return sassPlugin({
     type: inline ? "style" : "css",
-    async transform(source, path) {
-      const start = performance.now();
-
-      logger.debug("Processing CSS", { path });
-
-      const projectRoot = process.cwd();
-      const { css } = await postcss(postcssPlugins)
-        .use(
-          postcssImport({
-            path: [resolve(projectRoot, "src")],
-          }),
-        )
-        .process(source, {
-          from: path,
-        });
-
-      logger.debug("CSS processed", {
-        path,
-        ms: Math.round(performance.now() - start),
-      });
-
-      return css;
-    },
+    transform: postcssModules(
+      {
+        generateScopedName: "[name]__[local]___[hash:base64:5]",
+        localsConvention: "camelCaseOnly",
+      },
+      [
+        postcssImport({ path: [resolve(process.cwd(), "src")] }),
+        autoprefixer,
+        postcssPresetEnv({ stage: 0 }),
+        ...(minify ? [postcssMinify()] : []),
+      ],
+    ),
   });
 }

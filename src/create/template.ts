@@ -51,6 +51,15 @@ export const COMMON_FILES: FileSlice = (opts) => [
     action,
     isShared: true,
   },
+  ...(opts.language === "ts"
+    ? [
+        {
+          from: "css.d.ts",
+          to: "src/types/css.d.ts",
+          isShared: true,
+        },
+      ]
+    : []),
 ];
 
 export const LANGUAGE_FILES: FileRegistry<Options["language"]> = {

@@ -17,8 +17,7 @@ export async function dev(options: DevCLIOptions) {
   logger.greeting(pc.green("Starting development environment"));
 
   let ctx: Awaited<ReturnType<typeof context>> | undefined;
-  let server: HMRServer | undefined;
-
+  let server: HMRServer | undefined = undefined;
   loadConfig(async (config, isNewUpdate) => {
     if (isNewUpdate) {
       logger.clear();
@@ -31,19 +30,16 @@ export async function dev(options: DevCLIOptions) {
         serveDir: config.serverConfig.serveDir ?? outDir,
         port: options.port ?? config.serverConfig.port,
       });
+      await server.start();
 
       const outFiles = {
         js: config.template === "extension" ? `${urlSlugify(config.name)}.js` : "theme.js",
         css: config.template === "theme" ? "user.css" : null,
       };
 
-      await injectHMRExtension(server.link, server.hmrLink, outFiles);
+      await injectHMRExtension(server.link, server.wsLink, outFiles);
 
-      ctx = await context(getJSDevOptions(config, { ...options, outFiles }));
-
-      server.setContext(ctx);
-
-      await server.start();
+      ctx = await context(getJSDevOptions(config, { ...options, outFiles, server }));
 
       await ctx.watch();
 
@@ -64,7 +60,7 @@ export async function dev(options: DevCLIOptions) {
     };
   });
 }
-type GetDevOptions = DevCLIOptions & { outFiles: OutFiles };
+type GetDevOptions = DevCLIOptions & { outFiles: OutFiles; server: HMRServer };
 function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
   const entryPoints = (() => {
     if (config.template === "theme") {
@@ -78,8 +74,9 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
   // to use btw the plugins
   const cache: BuildCache = {
     files: new Map(),
+    changed: new Set(),
+    hasChanges: true,
   };
-
   const overrides: BuildOptions = {
     ...defaultBuildOptions,
     outdir: outDir,
@@ -100,6 +97,8 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
           remove: true,
           outDir,
         },
+        dev: true,
+        server: options.server,
         outFiles: options.outFiles,
       }),
     ],

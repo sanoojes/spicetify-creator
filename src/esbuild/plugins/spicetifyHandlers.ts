@@ -16,6 +16,7 @@ export type Options = {
   remove?: boolean;
   outDir: string;
 };
+
 export type BuildHandlerOptions = {
   config: Config;
   options: Options;
@@ -30,6 +31,7 @@ export const spicetifyHandler = ({
   logger = createLogger("plugin:spicetifyHandler"),
 }: BuildHandlerOptions): Plugin => ({
   name: "spice_internal__spicetify-build-handler",
+
   async setup(build) {
     const { apply = true, copy = true, applyOnce = true, remove, outDir = "./dist" } = options;
 
@@ -44,26 +46,18 @@ export const spicetifyHandler = ({
     if (apply) {
       const defaultTheme = spiceConfig.Setting.current_theme;
 
-      build.onStart(async () => {
-        if (!spiceConfig) return;
-
+      build.onStart(() => {
         const spiceIdentifier = remove ? `${identifier}-` : identifier;
 
         if (isExtension) {
-          logger.info(
-            pc.yellow(`${remove ? "Removing" : "Adding"} extension: ${pc.bold(identifier)}`),
-          );
           runSpice(["config", "extensions", spiceIdentifier]);
         } else {
-          const actionLabel = remove ? "Removing theme" : "Setting theme to";
-          logger.info(pc.yellow(`${actionLabel}: ${pc.bold(identifier)}`));
           runSpice(["config", "current_theme", spiceIdentifier]);
         }
       });
 
       if (!isExtension && !remove) {
         const resetTheme = () => {
-          logger.info(pc.gray(`Restoring default theme: ${defaultTheme}`));
           runSpice(["config", "current_theme", defaultTheme]);
           process.exit();
         };
@@ -76,13 +70,21 @@ export const spicetifyHandler = ({
     build.onEnd(async (result) => {
       if (result.errors.length > 0) return;
 
+      if (!cache.hasChanges || cache.changed.size === 0) {
+        return;
+      }
+
       const destDirs = [resolve(outDir)];
-      if (copy)
+      if (copy) {
         destDirs.push(isExtension ? getExtensionDir() : resolve(getThemesDir(), identifier));
+      }
 
-      const tasks = [];
+      const tasks: Promise<void>[] = [];
 
-      for (const [filePath, fileData] of cache.files) {
+      for (const filePath of cache.changed) {
+        const fileData = cache.files.get(filePath);
+        if (!fileData) continue;
+
         for (const destDir of destDirs) {
           const targetPath = resolve(destDir, basename(filePath));
 
@@ -97,23 +99,24 @@ export const spicetifyHandler = ({
 
       try {
         await Promise.all(tasks);
-        logger.debug(pc.green(`${CHECK} Files copied to Spicetify directory and Dist.`));
+        logger.debug(pc.green(`${CHECK} Changed files copied.`));
       } catch (err) {
         logger.error(
           pc.red(
             `${CROSS} Failed to copy files: ${err instanceof Error ? err.message : String(err)}`,
           ),
         );
+        return;
       }
 
-      const shouldApply = apply && (!applyOnce || !hasAppliedOnce);
+      const shouldApply = apply && cache.hasChanges && (!applyOnce || !hasAppliedOnce);
+
       if (shouldApply) {
-        logger.info(pc.cyan(`Applying ${config.template} to Spicetify...`));
         const { stderr, status } = runSpice(["apply"]);
+
         if (status !== 0) {
           logger.error(pc.red(`${CROSS} Spicetify apply failed: ${stderr}`));
         } else {
-          logger.info(pc.green(`${CHECK} Spicetify applied successfully!`));
           hasAppliedOnce = true;
         }
       }

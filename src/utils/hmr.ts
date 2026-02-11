@@ -10,7 +10,7 @@ import { liveReloadFilePath } from "@/metadata";
 import { logger } from "@/utils/logger";
 import type { OutFiles } from "@/esbuild";
 
-export const injectHMRExtension = async (rootLink: string, hmrLink: string, outFiles: OutFiles) => {
+export const injectHMRExtension = async (rootLink: string, wsLink: string, outFiles: OutFiles) => {
   const extName = `sc-live-reload-helper.js`;
   const spiceConfig = await getSpicetifyConfig();
 
@@ -44,9 +44,9 @@ export const injectHMRExtension = async (rootLink: string, hmrLink: string, outF
       loader: "js",
       define: {
         _SERVER_URL: JSON.stringify(rootLink),
-        _HOT_RELOAD_LINK: JSON.stringify(hmrLink),
+        _HOT_RELOAD_LINK: JSON.stringify(wsLink),
         _JS_PATH: JSON.stringify(`/files/${outFiles.js}`),
-        _CSS_PATH: JSON.stringify(outFiles.css ? `/files/${outFiles.css}` : null),
+        _CSS_PATH: JSON.stringify(outFiles.css ? `/files/${outFiles.css}` : `/files/app.css`),
       },
     });
 

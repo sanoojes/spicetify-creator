@@ -2,6 +2,7 @@ import type { BuildOptions, Plugin } from "esbuild";
 import type { Config } from "@/config/schema";
 import plugins from "@/esbuild/plugins";
 import type { Options as HandlerOpts } from "@/esbuild/plugins/spicetifyHandlers";
+import type { HMRServer } from "@/dev/server";
 
 export type OutFiles = {
   js: string;
@@ -9,13 +10,14 @@ export type OutFiles = {
 };
 
 export type File = {
-  hash: string;
   name: string;
   contents: Uint8Array<ArrayBufferLike>;
 };
 
 export type BuildCache = {
   files: Map<string, File>;
+  changed: Set<string>;
+  hasChanges: boolean;
 };
 
 export const defaultBuildOptions: Partial<BuildOptions> = {
@@ -35,14 +37,15 @@ export const getCommonPlugins = (
     cache: BuildCache;
     buildOptions: HandlerOpts;
     outFiles: OutFiles;
+    server?: HMRServer;
+    dev?: boolean;
   },
 ): Plugin[] => {
-  const { template, minify, cache, name, version, buildOptions, outFiles } = opts;
+  const { template, minify, cache, name, version, buildOptions, outFiles, server, dev } = opts;
 
   return [
     ...plugins.css({
       minify,
-      inline: template === "extension",
     }),
 
     plugins.externalGlobal({
@@ -59,6 +62,8 @@ export const getCommonPlugins = (
       type: template,
       cache,
       outFiles,
+      server,
+      dev,
     }),
 
     plugins.spicetifyHandler({

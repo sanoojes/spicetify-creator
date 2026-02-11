@@ -1,45 +1,55 @@
 (() => {
-  const EVT_SOURCE = _HOT_RELOAD_LINK;
+  const WS_URL = _HOT_RELOAD_LINK;
   const SERVER = _SERVER_URL;
   const CSS_PATH = _CSS_PATH;
   const JS_PATH = _JS_PATH;
+
   const CSS_ID = "sc-css-injected";
   const JS_ID = "sc-js-injected";
 
+  let socket;
+
   const connect = () => {
-    const es = new EventSource(EVT_SOURCE);
+    socket = new WebSocket(WS_URL);
 
-    es.addEventListener("change", (e) => {
-      const { added, removed, updated } = JSON.parse(e.data);
-      console.log(JSON.parse(e.data));
+    socket.addEventListener("open", () => {
+      console.log("[SC] Live reload connected");
+    });
 
-      if (added.length > 0 || removed.length > 0) {
-        window.location.reload();
+    socket.addEventListener("message", (event) => {
+      let updated;
+
+      try {
+        updated = JSON.parse(event.data);
+      } catch {
         return;
       }
 
-      const isOnlyCSS = updated.length > 0 && updated.every((file) => file.endsWith(".css"));
+      if (!Array.isArray(updated) || updated.length === 0) return;
 
-      if (isOnlyCSS) {
-        updated.forEach((file) => {
-          const link = document.getElementById(CSS_ID);
-          if (link) {
-            const next = link.cloneNode();
-            next.href = `${new URL(file, SERVER).href}?t=${Date.now()}`;
-            next.onload = () => link.remove();
-            link.parentNode.insertBefore(next, link.nextSibling);
-          }
-        });
+      const isOnlyCSS = updated.every((file) => file.endsWith(".css"));
+
+      if (isOnlyCSS && CSS_PATH) {
+        const link = document.getElementById(CSS_ID);
+        if (!link || !link.parentNode) return;
+
+        const next = link.cloneNode(false);
+        next.href = `${SERVER}${CSS_PATH}?t=${Date.now()}`;
+        next.onload = () => link.remove();
+
+        link.parentNode.insertBefore(next, link.nextSibling);
       } else {
         window.location.reload();
       }
     });
 
-    es.onerror = () => {
-      es.close();
-      console.warn("Hot reload disconnected. Retrying in 1s...");
+    socket.addEventListener("close", () => {
       setTimeout(connect, 1000);
-    };
+    });
+
+    socket.addEventListener("error", () => {
+      socket.close();
+    });
   };
 
   if (CSS_PATH) {
@@ -53,9 +63,7 @@
   const script = document.createElement("script");
   script.id = JS_ID;
   script.src = SERVER + JS_PATH;
-  script.async = true;
   script.type = "module";
-  script.defer = true;
   document.body.appendChild(script);
 
   connect();

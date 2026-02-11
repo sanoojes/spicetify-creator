@@ -59,9 +59,11 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
 
   const outDir = resolve(config.outDir);
 
-  // to use btw the plugins
+  // to use in the plugins
   const cache: BuildCache = {
     files: new Map(),
+    changed: new Set(),
+    hasChanges: true,
   };
   const outFiles = {
     js: config.template === "extension" ? `${urlSlugify(config.name)}.js` : "theme.js",
@@ -87,6 +89,8 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
           apply: options.apply,
           copy: options.copy,
           outDir,
+          applyOnce: false,
+          remove: false,
         },
         outFiles,
       }),

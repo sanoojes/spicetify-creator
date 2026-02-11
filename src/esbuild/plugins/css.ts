@@ -9,11 +9,10 @@ import postcss from "postcss";
 import postcssImport from "postcss-import";
 import postcssPresetEnv from "postcss-preset-env";
 
-type CSSPlugin = { minify: boolean; inline: boolean; logger: Logger };
+type CSSPlugin = { minify: boolean; logger: Logger };
 
 export function css({
   minify = false,
-  inline = false,
   logger = createLogger("plugin:css"),
 }: Partial<CSSPlugin> = {}): Plugin[] {
   const projectRoot = process.cwd();
@@ -25,7 +24,7 @@ export function css({
     ...(minify ? [postcssMinify()] : []),
   ];
 
-  const type = inline ? "style" : "css";
+  const type = "css";
 
   return [
     sassPlugin({

@@ -1,3 +1,15 @@
+__ESBUILD__HAS_CSS &&
+  (async () => {
+    try {
+      const css = `{{INJECTED_CSS_HERE}}`;
+      if (css && css.trim().length !== 0) {
+        const style = document.createElement("style");
+        style.setAttribute("data-app", "{{APP_ID}}");
+        style.textContent = css;
+        document.head.appendChild(style);
+      }
+    } catch {}
+  })();
 (async () => {
   const _ID = `{{APP_SLUG}}-{{APP_TYPE}}`;
   if (!window.SpiceGlobals) window.SpiceGlobals = {};

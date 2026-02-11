@@ -1,40 +1,35 @@
 // TODO: make a good homepage
-import { createServer, request, type IncomingHttpHeaders } from "node:http";
+import { createServer, type IncomingHttpHeaders } from "node:http";
+import { WebSocketServer, WebSocket } from "ws";
 import { root } from "@/dev/server/templates";
-import type { BuildContext } from "esbuild";
 import type { HMRServerConfig } from "@/config/schema";
 import { DEFAULT_PORT, outDir } from "@/dev";
 import { pc } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
-import { extname, resolve } from "node:path";
-import { createReadStream, existsSync } from "node:fs";
+import { extname, resolve, join } from "node:path";
+import { createReadStream, existsSync, statSync } from "node:fs";
 
-export const HMR_PATH = "/sc-live";
-export type HmrEvent =
-  | { type: "connected"; data: { id: string } }
-  | { type: "update"; data: { files: string[]; timestamp: number } }
-  | { type: "css-update"; data: { files: string[]; timestamp: number } }
-  | { type: "error"; data: { message: string } };
+export const WS_PATH = "/spicetify-creator";
 
 export type HMRServer = Awaited<ReturnType<typeof createHmrServer>>;
 
-export async function createHmrServer(
-  config: HMRServerConfig,
-  initialCtx?: BuildContext,
-  logger = createLogger("hmrServer"),
-) {
-  const { port = DEFAULT_PORT, serveDir } = config;
+export async function createHmrServer(config: HMRServerConfig, logger = createLogger("hmrServer")) {
+  const { port = DEFAULT_PORT, serveDir = outDir } = config;
   let isRunning = false;
 
-  let ctx = initialCtx;
-  let esbuildServe: Awaited<ReturnType<BuildContext["serve"]>> | undefined;
-  const initEsbuildServe = async () => {
-    if (ctx && !esbuildServe) {
-      esbuildServe = await ctx.serve({
-        servedir: serveDir,
-      });
-    }
+  const mimeTypes: Record<string, string> = {
+    ".html": "text/html",
+    ".js": "text/javascript",
+    ".css": "text/css",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
   };
+
   const httpServer = createServer((req, res) => {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
@@ -53,105 +48,94 @@ export async function createHmrServer(
       res.writeHead(statusCode, { ...headers, ...corsHeaders });
     };
 
-    if (!esbuildServe) {
-      wrapResponse(500, { "Content-Type": "text/plain" });
-      res.end("Not working");
-      return;
-    }
+    const url = req.url ?? "/";
+    const cleanUrl = url.split("?")[0] ?? "/";
 
-    const url = req.url || "/";
-
-    const buildDirPrefix = "/files/";
-    if (url.startsWith(buildDirPrefix)) {
-      const relativePath = url.replace(buildDirPrefix, "");
-      const filePath = resolve(outDir, relativePath);
-
-      if (existsSync(filePath)) {
-        const mimeTypes: Record<string, string> = {
-          ".html": "text/html",
-          ".js": "text/javascript",
-          ".css": "text/css",
-          ".json": "application/json",
-          ".png": "image/png",
-          ".jpg": "image/jpeg",
-          ".gif": "image/gif",
-          ".svg": "image/svg+xml",
-        };
-
-        const ext = extname(filePath).toLowerCase();
-        const contentType = mimeTypes[ext] || "application/octet-stream";
-
-        res.writeHead(200, { ...corsHeaders, "Content-Type": contentType });
-        createReadStream(filePath).pipe(res);
-        return;
-      }
-    }
-
-    if (url === "/" || url === "/index.html") {
+    if (cleanUrl === "/" || cleanUrl === "/index.html") {
       wrapResponse(200, { "Content-Type": "text/html" });
       res.end(root());
       return;
     }
 
-    let proxyPath = url;
-    if (url.startsWith(HMR_PATH)) proxyPath = "/esbuild";
+    const relativePath = cleanUrl.startsWith("/files/")
+      ? cleanUrl.slice("/files".length)
+      : cleanUrl;
 
-    const options = {
-      hostname: esbuildServe.hosts[0],
-      port: esbuildServe.port,
-      path: proxyPath,
-      method: req.method,
-      headers: req.headers,
-    };
+    const filePath = resolve(join(serveDir, relativePath));
 
-    const proxyReq = request(options, (proxyRes) => {
-      if (proxyRes.statusCode === 404) {
-        wrapResponse(404, { "Content-Type": "text/html" });
-        res.end("<h1>A custom 404 page</h1>");
+    try {
+      if (existsSync(filePath) && statSync(filePath).isFile()) {
+        const ext = extname(filePath).toLowerCase();
+        const contentType = mimeTypes[ext] || "application/octet-stream";
+
+        wrapResponse(200, { "Content-Type": contentType });
+        createReadStream(filePath).pipe(res);
         return;
       }
+    } catch {}
 
-      wrapResponse(proxyRes.statusCode ?? 500, proxyRes.headers);
-      proxyRes.pipe(res, { end: true });
-    });
-
-    proxyReq.on("error", () => {
-      wrapResponse(502, { "Content-Type": "text/plain" });
-      res.end("Proxy Error");
-    });
-
-    req.pipe(proxyReq, { end: true });
+    wrapResponse(404, { "Content-Type": "text/html" });
+    res.end("<h1>404 - Not Found</h1>");
   });
-  return {
-    setContext: (newCtx: BuildContext) => {
-      ctx = newCtx;
-      esbuildServe = undefined;
-    },
-    start: async () => {
-      if (ctx) await initEsbuildServe();
 
-      return new Promise<void>((resolve) => {
+  const wss = new WebSocketServer({ noServer: true });
+  const clients = new Set<WebSocket>();
+
+  httpServer.on("upgrade", (req, socket, head) => {
+    const { url } = req;
+    if (!url?.startsWith(WS_PATH)) {
+      socket.destroy();
+      return;
+    }
+
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      clients.add(ws);
+
+      ws.on("close", () => {
+        clients.delete(ws);
+      });
+
+      ws.on("error", () => {
+        clients.delete(ws);
+      });
+
+      wss.emit("connection", ws, req);
+    });
+  });
+
+  function broadcast(data: string[]) {
+    const message = typeof data === "string" ? data : JSON.stringify(data);
+
+    for (const client of clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    }
+  }
+
+  return {
+    start: async () =>
+      new Promise<void>((resolve) => {
         httpServer.listen(port, () => {
           logger.debug(
             `${pc.bold("HTTP Server Started at")}: ${pc.cyan(`http://localhost:${port}/`)}`,
           );
-
           isRunning = true;
           resolve();
         });
-      });
-    },
+      }),
 
-    stop: () => {
-      return new Promise<void>((resolve, reject) => {
+    stop: () =>
+      new Promise<void>((resolve, reject) => {
         httpServer.close((err) => {
           if (err) return reject(err);
           isRunning = false;
           logger.debug(`${pc.yellow("! ")} ${pc.gray("HTTP server stopped")}`);
           resolve();
         });
-      });
-    },
+      }),
+
+    broadcast,
 
     get port() {
       return port;
@@ -162,8 +146,8 @@ export async function createHmrServer(
     get link() {
       return `http://localhost:${port}`;
     },
-    get hmrLink() {
-      return `${this.link}${HMR_PATH}`;
+    get wsLink() {
+      return `ws://localhost:${port}${WS_PATH}`;
     },
   };
 }

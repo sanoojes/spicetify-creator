@@ -9,6 +9,8 @@ import { getExtensionDir, getSpicetifyConfig, getThemesDir, runSpice } from "@/u
 import type { BuildCache } from "@/esbuild";
 import { createLogger, type Logger } from "@/utils/logger";
 
+const skipSpicetify = process.env.SPICETIFY_SKIP === "true" || process.env.CI === "true";
+
 export type Options = {
   copy?: boolean;
   apply?: boolean;
@@ -39,6 +41,39 @@ export const spicetifyHandler = ({
 
     const isExtension = config.template === "extension";
     const identifier = isExtension ? `${urlSlugify(config.name)}.js` : urlSlugify(config.name);
+
+    if (skipSpicetify) {
+      logger.info(pc.yellow("SPICETIFY_SKIP=true, skipping spicetify operations"));
+
+      build.onEnd(async (result) => {
+        if (result.errors.length > 0) return;
+        if (!cache.hasChanges || cache.changed.size === 0) return;
+
+        const tasks: Promise<void>[] = [];
+
+        for (const filePath of cache.changed) {
+          const fileData = cache.files.get(filePath);
+          if (!fileData) continue;
+
+          const targetPath = resolve(outDir, basename(filePath));
+          tasks.push(
+            (async () => {
+              await mkdirp(outDir);
+              await writeFile(targetPath, fileData.contents);
+            })(),
+          );
+        }
+
+        try {
+          await Promise.all(tasks);
+          logger.debug(pc.green(`${CHECK} Built files written to ${outDir}`));
+        } catch (err) {
+          logger.error(pc.red(`${CROSS} Failed to write files: ${err instanceof Error ? err.message : String(err)}`));
+        }
+      });
+
+      return;
+    }
 
     const spiceConfig = await getSpicetifyConfig();
     logger.debug(pc.green("Spicetify Config: "), spiceConfig);

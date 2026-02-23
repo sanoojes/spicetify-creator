@@ -467,6 +467,11 @@ declare namespace _Spicetify {
      * @param amount in milisecond. Default: 15000.
      */
     function skipForward(amount?: number): void;
+     /**
+     * Set Heart on/off (Favourite) track state.
+     * @param state
+     */
+    function setHeart(state: boolean): void;
     /**
      * Toggle Heart (Favourite) track state.
      */
@@ -487,6 +492,10 @@ declare namespace _Spicetify {
      * Toggle Shuffle/No shuffle.
      */
     function toggleShuffle(): void;
+   /**
+     * Internal player state variables.
+     */
+    const origin: any;
   }
   /**
    * Adds a track or array of tracks to prioritized queue.

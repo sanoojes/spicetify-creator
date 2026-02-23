@@ -74,6 +74,7 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
     ...defaultBuildOptions,
     outdir: outDir,
     minify,
+    sourcemap: false,
     external: [
       ...(config.esbuildOptions?.external ? config.esbuildOptions.external : []),
       "react",

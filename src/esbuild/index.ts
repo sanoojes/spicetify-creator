@@ -46,6 +46,7 @@ export const getCommonPlugins = (
   return [
     ...plugins.css({
       minify,
+      inline: !dev && template === "extension",
     }),
 
     plugins.externalGlobal({

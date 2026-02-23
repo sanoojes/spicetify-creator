@@ -45,7 +45,6 @@ export function wrapWithLoader({
 
           cache.changed.clear();
           cache.hasChanges = false;
-
           const filesChanged: string[] = [];
 
           let bundledCss = "";
@@ -53,10 +52,7 @@ export function wrapWithLoader({
             bundledCss = res.outputFiles
               .filter((f) => f.path.endsWith(".css"))
               .map((f) => f.text)
-              .join("\n")
-              .replace(/\\/g, "\\\\")
-              .replace(/`/g, "\\`")
-              .replace(/\${/g, "\\${");
+              .join("");
           }
 
           const transformPromises = res.outputFiles.map(async (file) => {
@@ -65,48 +61,24 @@ export function wrapWithLoader({
 
             if (!dev && isCss && type === "extension") return;
 
-            let targetName: string;
-            if (isJs) {
-              targetName = outFiles.js;
-            } else if (isCss) {
-              targetName = outFiles.css ?? basename(file.path);
-            } else {
-              targetName = basename(file.path);
-            }
-
+            const targetName = isJs
+              ? outFiles.js
+              : isCss
+                ? (outFiles.css ?? basename(file.path))
+                : basename(file.path);
             const renamedPath = join(build.initialOptions.outdir || "./dist/", targetName);
 
             if (!isJs) {
-              const previous = cache.files.get(renamedPath);
-              const nextBuffer = file.contents;
-
-              const didChange =
-                !previous ||
-                !previous.contents ||
-                Buffer.compare(previous.contents, nextBuffer) !== 0;
-
-              if (!didChange) return;
-
-              cache.files.set(renamedPath, {
-                name: targetName,
-                contents: nextBuffer,
-              });
+              cache.files.set(renamedPath, { name: targetName, contents: file.contents });
               cache.changed.add(renamedPath);
               cache.hasChanges = true;
               filesChanged.push(renamedPath);
-
               return;
             }
 
             const slug = varSlugify(`${name}_${version}`);
-
-            if (!existsSync(templateFilePath)) {
-              logger.error(`Template file not found at: ${templateFilePath}`);
-              process.exit(1);
-            }
-
-            const minify = build.initialOptions.minify;
             const templateRaw = readFileSync(templateFilePath, "utf-8");
+            const minify = build.initialOptions.minify;
 
             const { code: transformedTemp } = await transform(templateRaw, {
               minify,
@@ -114,50 +86,35 @@ export function wrapWithLoader({
               loader: "jsx",
               define: {
                 __ESBUILD__HAS_CSS: JSON.stringify(type === "extension"),
+                __ESBUILD__APP_SLUG: JSON.stringify(slug),
+                __ESBUILD__APP_TYPE: JSON.stringify(type),
+                __ESBUILD__APP_ID: JSON.stringify(varSlugify(name)),
+                __ESBUILD__APP_VERSION: JSON.stringify(version),
+                __ESBUILD__APP_HASH: JSON.stringify(""),
               },
             });
 
-            const kv = {
-              "{{APP_SLUG}}": slug,
-              "{{APP_TYPE}}": type,
-              "{{APP_ID}}": varSlugify(name),
-              "{{APP_VERSION}}": version,
-              "{{APP_HASH}}": "",
-              '"{{INJECT_START_COMMENT}}"': minify ? "" : "/* --- START OF COMPILED CODE --- */",
-              '"{{INJECT_END_COMMENT}}"': minify ? "" : "/* --- END OF COMPILED CODE --- */",
+            const template = replace(transformedTemp, {
+              '"{{INJECT_START_COMMENT}}"': minify ? "" : "/* --- START --- */",
+              '"{{INJECT_END_COMMENT}}"': minify ? "" : "/* --- END --- */",
+              "{{INJECTED_CSS_HERE}}": bundledCss,
               '"{{INJECTED_JS_HERE}}"': file.text,
-              "{{INJECTED_CSS_HERE}}": dev ? "" : bundledCss,
-            };
-
-            const template = replace(transformedTemp, kv);
-            const nextBuffer = Buffer.from(template);
-
-            const previous = cache.files.get(renamedPath);
-
-            const didChange =
-              !previous ||
-              !previous.contents ||
-              Buffer.compare(previous.contents, nextBuffer) !== 0;
-
-            if (!didChange) return;
-
-            cache.files.set(renamedPath, {
-              name: targetName,
-              contents: nextBuffer,
             });
 
+            const nextBuffer = Buffer.from(template);
+            const previous = cache.files.get(renamedPath);
+            if (previous?.contents && Buffer.compare(previous.contents, nextBuffer) === 0) return;
+
+            cache.files.set(renamedPath, { name: targetName, contents: nextBuffer });
             cache.changed.add(renamedPath);
             cache.hasChanges = true;
             filesChanged.push(renamedPath);
           });
 
           await Promise.all(transformPromises);
-
-          if (filesChanged.length > 0) {
-            server?.broadcast(filesChanged);
-          }
+          if (filesChanged.length > 0) server?.broadcast(filesChanged);
         } catch (e) {
-          logger.error(`Error wrapping: ${e instanceof Error ? e.message : String(e)}`);
+          logger.error(`Error: ${e instanceof Error ? e.message : String(e)}`);
         }
       });
     },

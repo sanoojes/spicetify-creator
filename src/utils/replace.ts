@@ -1,6 +1,11 @@
 export function replace(contents: string, kv: Record<string, string>): string {
-  for (const [key, value] of Object.entries(kv)) {
-    contents = contents.replaceAll(key, value);
-  }
-  return contents;
+  const keys = Object.keys(kv);
+  if (keys.length === 0) return contents;
+
+  const pattern = new RegExp(
+    keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
+    "g",
+  );
+
+  return contents.replace(pattern, (matched) => kv[matched] ?? matched);
 }

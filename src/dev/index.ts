@@ -81,6 +81,7 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
     ...defaultBuildOptions,
     outdir: outDir,
     minify,
+    sourcemap: "inline",
     external: [
       ...(config.esbuildOptions?.external ? config.esbuildOptions.external : []),
       "react",

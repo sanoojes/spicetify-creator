@@ -4,19 +4,19 @@ __ESBUILD__HAS_CSS &&
       const css = `{{INJECTED_CSS_HERE}}`;
       if (css && css.trim().length !== 0) {
         const style = document.createElement("style");
-        style.setAttribute("data-app", "{{APP_ID}}");
+        style.setAttribute("data-app", __ESBUILD__APP_ID);
         style.textContent = css;
         document.head.appendChild(style);
       }
-    } catch {}
+    } catch { }
   })();
 (async () => {
-  const _ID = `{{APP_SLUG}}-{{APP_TYPE}}`;
+  const _ID = `${__ESBUILD__APP_SLUG}-${__ESBUILD__APP_TYPE}`;
   if (!window.SpiceGlobals) window.SpiceGlobals = {};
   window.SpiceGlobals[_ID] = {
-    id: "{{APP_ID}}",
-    version: "{{APP_VERSION}}",
-    hash: "{{APP_HASH}}",
+    id: __ESBUILD__APP_ID,
+    version: __ESBUILD__APP_VERSION,
+    hash: __ESBUILD__APP_HASH,
   };
   const { id: appId, version: v } = window.SpiceGlobals[_ID];
   const _wait = (p, a = 0) =>
@@ -36,7 +36,7 @@ __ESBUILD__HAS_CSS &&
     // oxfmt-ignore
     "{{INJECT_START_COMMENT}}"
       (async function () {
-        "{{INJECTED_JS_HERE}}";
+        "{{INJECTED_JS_HERE}}"
       })();
     // oxfmt-ignore
     "{{INJECT_END_COMMENT}}"

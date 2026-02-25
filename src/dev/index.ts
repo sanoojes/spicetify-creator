@@ -90,7 +90,7 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
     ],
     define: {
       [DEV_MODE_VAR_NAME]: "true",
-      ...(config.devModeVarName ? { [config.devModeVarName]: "true" } : {}),
+      [config.devModeVarName]: "true",
       ...config.esbuildOptions.define,
     },
     plugins: [

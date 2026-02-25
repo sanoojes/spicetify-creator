@@ -83,7 +83,7 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
     ],
     define: {
       [DEV_MODE_VAR_NAME]: "false",
-      ...(config.devModeVarName ? { [config.devModeVarName]: "false" } : {}),
+      [config.devModeVarName]: "false",
       ...config.esbuildOptions.define,
     },
     plugins: [

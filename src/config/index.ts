@@ -10,6 +10,7 @@ import { getPackageManager } from "@/utils/package-manager";
 import { safeParse } from "@/utils/schema";
 import { pc } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
+import { DEV_MODE_VAR_NAME } from "@/constants";
 
 const logger = createLogger("config");
 
@@ -121,6 +122,8 @@ async function resolveContext(config: FileConfig): Promise<FileConfig> {
       config.entry = resolveDefaultEntries(cwd, "js");
     }
   }
+
+  if (!config.devModeVarName) config.devModeVarName = DEV_MODE_VAR_NAME;
 
   config.outDir = resolve(cwd, config.outDir || "./dist");
 

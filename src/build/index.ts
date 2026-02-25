@@ -6,6 +6,7 @@ import type { Config } from "@/config/schema";
 import { defaultBuildOptions, getCommonPlugins, type BuildCache } from "@/esbuild";
 import { pc, urlSlugify } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
+import { DEV_MODE_VAR_NAME } from "@/constants";
 
 const logger = createLogger("build");
 
@@ -80,6 +81,10 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
       "react",
       "react-dom",
     ],
+    define: {
+      [DEV_MODE_VAR_NAME]: JSON.stringify(false),
+      ...config.esbuildOptions.define,
+    },
     plugins: [
       ...(config.esbuildOptions?.plugins ? config.esbuildOptions.plugins : []),
       ...getCommonPlugins({

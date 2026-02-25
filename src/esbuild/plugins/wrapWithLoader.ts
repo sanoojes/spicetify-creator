@@ -5,7 +5,7 @@ import { templateFilePath, type TemplateType } from "@/metadata";
 import type { BuildCache, OutFiles } from "@/esbuild";
 import { createLogger, Logger } from "@/utils/logger";
 import { basename, join } from "node:path";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { replace } from "@/utils/fs";
 import type { HMRServer } from "@/dev/server";
 

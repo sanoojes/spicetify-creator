@@ -68,7 +68,11 @@ export const spicetifyHandler = ({
           await Promise.all(tasks);
           logger.debug(pc.green(`${CHECK} Built files written to ${outDir}`));
         } catch (err) {
-          logger.error(pc.red(`${CROSS} Failed to write files: ${err instanceof Error ? err.message : String(err)}`));
+          logger.error(
+            pc.red(
+              `${CROSS} Failed to write files: ${err instanceof Error ? err.message : String(err)}`,
+            ),
+          );
         }
       });
 

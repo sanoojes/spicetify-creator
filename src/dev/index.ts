@@ -8,6 +8,7 @@ import { defaultBuildOptions, getCommonPlugins, type BuildCache, type OutFiles }
 import { pc, urlSlugify } from "@/utils/common";
 import { logger } from "@/utils/logger";
 import { injectHMRExtension } from "@/utils/hmr";
+import { DEV_MODE_VAR_NAME } from "@/constants";
 
 export const DEFAULT_PORT = 54321;
 
@@ -87,6 +88,10 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
       "react",
       "react-dom",
     ],
+    define: {
+      [DEV_MODE_VAR_NAME]: JSON.stringify(true),
+      ...config.esbuildOptions.define,
+    },
     plugins: [
       ...(config.esbuildOptions?.plugins ? config.esbuildOptions.plugins : []),
       ...getCommonPlugins({

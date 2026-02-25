@@ -54,6 +54,7 @@ const CommonSchema = v.object({
   framework: v.picklist(frameworkTypes),
   packageManager: v.picklist(packageManagers),
   esbuildOptions: v.record(v.string(), v.any()) as v.GenericSchema<ESBuildOptions>,
+  devModeVarName: v.optional(v.string()),
 
   serverConfig: v.partial(ServerConfigSchema),
   version: v.string(),

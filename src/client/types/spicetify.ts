@@ -2442,6 +2442,6 @@ declare namespace _Spicetify {
 
 declare global {
   const Spicetify: typeof _Spicetify;
+  const __SPICE_CREATOR_DEV__: boolean;
 }
-
 export { _Spicetify as Spicetify };

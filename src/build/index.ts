@@ -82,7 +82,8 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
       "react-dom",
     ],
     define: {
-      [DEV_MODE_VAR_NAME]: JSON.stringify(false),
+      [DEV_MODE_VAR_NAME]: "false",
+      ...(config.devModeVarName ? { [config.devModeVarName]: "false" } : {}),
       ...config.esbuildOptions.define,
     },
     plugins: [

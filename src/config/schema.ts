@@ -3,8 +3,8 @@ import * as v from "valibot";
 import { frameworkTypes, linterTypes } from "@/metadata";
 import { packageManagers } from "@/utils/package-manager";
 
-type EsBuildOmited = "bundle" | "entryPoints";
-export type ESBuildOptions = Omit<_ESBuildOptions, EsBuildOmited>;
+type EsBuildOmitted = "bundle" | "entryPoints";
+export type ESBuildOptions = Omit<_ESBuildOptions, EsBuildOmitted>;
 
 export const ServerConfigSchema = v.object({
   port: v.optional(v.number()),
@@ -16,35 +16,29 @@ export type HMRServerConfig = v.InferOutput<typeof ServerConfigSchema>;
 
 const EntryFileSchema = v.string();
 
-const ThemeEntrySchema = v.object({
+const AssetEntrySchema = v.object({
   js: EntryFileSchema,
   css: EntryFileSchema,
 });
 
-const TemplateSpecificOptionalSchema = v.variant("template", [
-  v.partial(
-    v.object({
-      template: v.literal("extension"),
-      entry: EntryFileSchema,
-    }),
-  ),
-  v.partial(
-    v.object({
-      template: v.literal("theme"),
-      entry: ThemeEntrySchema,
-    }),
-  ),
-]);
+const ExtensionTemplateSchema = v.object({
+  template: v.literal("extension"),
+  entry: EntryFileSchema,
+});
+
+const ThemeTemplateSchema = v.object({
+  template: v.literal("theme"),
+  entry: AssetEntrySchema,
+});
 
 const TemplateSpecificSchema = v.variant("template", [
-  v.object({
-    template: v.literal("extension"),
-    entry: EntryFileSchema,
-  }),
-  v.object({
-    template: v.literal("theme"),
-    entry: ThemeEntrySchema,
-  }),
+  ExtensionTemplateSchema,
+  ThemeTemplateSchema,
+]);
+
+const TemplateSpecificOptionalSchema = v.variant("template", [
+  v.partial(ExtensionTemplateSchema),
+  v.partial(ThemeTemplateSchema),
 ]);
 
 const RequiredCommonSchema = v.object({
@@ -58,21 +52,22 @@ const RequiredCommonSchema = v.object({
   version: v.string(),
 });
 
-const CommonSchema = v.object({
+const OptionalCommonSchema = v.object({
   devModeVarName: v.optional(v.string()),
 });
 
 export const FileOptionsSchema = v.intersect([
   v.partial(RequiredCommonSchema),
-  CommonSchema,
+  OptionalCommonSchema,
   TemplateSpecificOptionalSchema,
 ]);
 
 export type FileConfig = v.InferOutput<typeof FileOptionsSchema>;
 
-export const OptionsSchema = v.pipe(
-  v.intersect([v.required(RequiredCommonSchema), CommonSchema, TemplateSpecificSchema]),
-  v.check((input) => !!input.name, "Name is required"),
-);
+export const OptionsSchema = v.intersect([
+  v.required(RequiredCommonSchema),
+  OptionalCommonSchema,
+  TemplateSpecificSchema,
+]);
 
 export type Config = v.InferOutput<typeof OptionsSchema>;

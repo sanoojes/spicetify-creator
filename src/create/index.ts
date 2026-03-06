@@ -27,6 +27,7 @@ import {
 } from "@/utils/package-manager";
 import { tryGitInit } from "@/utils/git";
 import { VALID_PROJECT_FILES } from "@/constants";
+import { updateTypes } from "@/utils/update-types";
 
 const isOnline = await getOnline();
 
@@ -194,6 +195,7 @@ export async function create(cwd: string, options: Options) {
   try {
     mkdirp(cwd);
     setupTemplateFiles(options, cwd);
+    await updateTypes(false);
 
     const pkgJSON = createPackageJSON(options);
     writePackageJSON(pkgJSON, cwd);

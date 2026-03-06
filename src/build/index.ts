@@ -74,6 +74,7 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
   const overrides: BuildOptions = {
     ...defaultBuildOptions,
     outdir: outDir,
+    format: "esm",
     minify,
     sourcemap: false,
     external: [

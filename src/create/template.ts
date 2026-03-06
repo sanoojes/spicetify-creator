@@ -38,7 +38,7 @@ export const COMMON_FILES: FileSlice = (opts) => [
     action,
     isShared: true,
   },
-  { from: ".gitignore", to: ".gitignore", isShared: true },
+  { from: "DOT-gitignore", to: ".gitignore", isShared: true },
   {
     from: `spice.config.${ext(opts.language)}`,
     to: `spice.config.${ext(opts.language)}`,

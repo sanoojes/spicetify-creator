@@ -1,4 +1,4 @@
-import { defineConfig } from "@spicetify/creator/client";
+import { defineConfig } from "@spicetify/creator";
 
 // Learn more: {{config-reference-link}}
 export default defineConfig({

@@ -35,6 +35,6 @@
       "@package.json": ["./package.json"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["**/dist/**", "templates/**"]
+  "include": ["src"],
+  "exclude": ["dist/**", "templates/**"]
 }

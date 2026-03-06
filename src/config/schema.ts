@@ -47,28 +47,31 @@ const TemplateSpecificSchema = v.variant("template", [
   }),
 ]);
 
-const CommonSchema = v.object({
+const RequiredCommonSchema = v.object({
   name: v.string(),
   outDir: v.string(),
   linter: v.picklist(linterTypes),
   framework: v.picklist(frameworkTypes),
   packageManager: v.picklist(packageManagers),
   esbuildOptions: v.record(v.string(), v.any()) as v.GenericSchema<ESBuildOptions>,
-  devModeVarName: v.optional(v.string()),
-
   serverConfig: v.partial(ServerConfigSchema),
   version: v.string(),
 });
 
+const CommonSchema = v.object({
+  devModeVarName: v.optional(v.string()),
+});
+
 export const FileOptionsSchema = v.intersect([
-  v.partial(CommonSchema),
+  v.partial(RequiredCommonSchema),
+  CommonSchema,
   TemplateSpecificOptionalSchema,
 ]);
 
 export type FileConfig = v.InferOutput<typeof FileOptionsSchema>;
 
 export const OptionsSchema = v.pipe(
-  v.intersect([v.required(CommonSchema), TemplateSpecificSchema]),
+  v.intersect([v.required(RequiredCommonSchema), CommonSchema, TemplateSpecificSchema]),
   v.check((input) => !!input.name, "Name is required"),
 );
 

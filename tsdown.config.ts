@@ -2,9 +2,9 @@ import { cp } from "node:fs/promises";
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/bin.ts", "src/client/index.ts"],
+  entry: ["src/bin.ts", "src/index.ts"],
   dts: true,
-  exports: true,
+  exports: false,
   inputOptions: {
     experimental: {
       resolveNewUrlToAsset: false,

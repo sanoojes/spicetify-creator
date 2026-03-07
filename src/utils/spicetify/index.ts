@@ -5,7 +5,6 @@ import { parse } from "ini";
 import * as v from "valibot";
 import { type SpicetifyConfig, SpicetifyConfigSchema } from "@/utils/spicetify/schema";
 import { env } from "@/env";
-import { SKIP_SPICETIFY } from "@/constants";
 
 export function runSpice(args: string[]) {
   validateSpicetify(env.spicetifyBin);

@@ -6,7 +6,7 @@ __ESBUILD__HAS_CSS &&
       style.setAttribute("data-app", __ESBUILD__APP_ID);
       style.textContent = css;
       document.head.appendChild(style);
-    } catch { }
+    } catch {}
   })();
 (async () => {
   const _ID = `${__ESBUILD__APP_SLUG}-${__ESBUILD__APP_TYPE}`;

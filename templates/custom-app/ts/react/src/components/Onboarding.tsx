@@ -22,16 +22,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ config }) => {
   if (!isVisible) return null;
 
   return (
-    <div
-      className={`onboarding-overlay ${isFading ? "fade-out" : ""}`}
-      onClick={handleDismiss}
-    >
+    <div className={`onboarding-overlay ${isFading ? "fade-out" : ""}`} onClick={handleDismiss}>
       <div className="onboarding-card" onClick={(e) => e.stopPropagation()}>
-        <button
-          className="close-icon-btn"
-          onClick={handleDismiss}
-          aria-label="Close"
-        >
+        <button className="close-icon-btn" onClick={handleDismiss} aria-label="Close">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path
               d="M1 1L11 11M1 11L11 1"
@@ -63,10 +56,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ config }) => {
         </div>
 
         <div className="onboarding-actions">
-          <button
-            className="get-started-btn"
-            onClick={() => openLink("{{get-started-link}}")}
-          >
+          <button className="get-started-btn" onClick={() => openLink("{{get-started-link}}")}>
             Get Started
           </button>
           <button
@@ -78,10 +68,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ config }) => {
           >
             Go to Custom App
           </button>
-          <button
-            className="discord-btn"
-            onClick={() => openLink("{{discord-link}}")}
-          >
+          <button className="discord-btn" onClick={() => openLink("{{discord-link}}")}>
             Join Discord
           </button>
           <button className="dismiss-btn" onClick={handleDismiss}>

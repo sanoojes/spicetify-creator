@@ -1,6 +1,6 @@
 {
-  "name": "@spicemod/creator",
-  "version": "0.0.22",
+  "name": "@spicetify/creator",
+  "version": "1.0.0",
   "description": "Easily make Spicetify extensions and themes",
   "keywords": [
     "cli",

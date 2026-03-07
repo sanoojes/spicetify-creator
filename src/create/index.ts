@@ -106,7 +106,8 @@ export async function createProject(cwd: Path, options: CreateOptions) {
           });
         },
 
-        framework: async () => {
+        framework: async ({ results: { template } }) => {
+          if (template === "custom-app") return "react"; // custom app only has react right now
           if (options.framework) return options.framework;
 
           return await p.select({

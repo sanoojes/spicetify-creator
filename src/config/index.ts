@@ -1,6 +1,3 @@
-// TODO: Automatically check for other entries when it gets deleted
-// TODO: Example: if app.tsx moves to src/app.tsx it should restart the config/builder
-
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { watchConfig } from "c12";
@@ -10,22 +7,9 @@ import { getPackageManager } from "@/utils/package-manager";
 import { safeParse } from "@/utils/schema";
 import { pc } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
+import { ENTRY_MAP, ICON_ACTIVE_GLOBS, ICON_GLOBS, type EntryType } from "@/config/globs";
 
 const logger = createLogger("config");
-
-const JS_ENTRY_GLOBS = [
-  "app.{ts,tsx,js,jsx,mts,mjs,cts,cjs}",
-  "extension/app.{ts,tsx,js,jsx,mts,mjs,cts,cjs}",
-  "src/app.{ts,tsx,js,jsx,mts,mjs,cts,cjs}",
-  "src/extension/app.{ts,tsx,js,jsx,mts,mjs,cts,cjs}",
-];
-
-const CSS_ENTRY_GLOBS = [
-  "app.{css,scss,sass,less,styl,stylus,pcss,postcss}",
-  "styles/app.{css,scss,sass,less,styl,stylus,pcss,postcss}",
-  "src/app.{css,scss,sass,less,styl,stylus,pcss,postcss}",
-  "src/styles/app.{css,scss,sass,less,styl,stylus,pcss,postcss}",
-];
 
 const CONFIG_DEFAULTS = {
   outDir: "./dist",
@@ -82,74 +66,100 @@ export async function getResolvedConfig(config: FileConfig): Promise<Config> {
 async function resolveContext(config: FileConfig): Promise<FileConfig> {
   const cwd = process.cwd();
 
-  const getPkg = () => {
-    try {
-      return JSON.parse(readFileSync(resolve(cwd, "package.json"), "utf-8"));
-    } catch {
-      return {};
-    }
-  };
+  const pkg = config.name && config.version ? {} : getPackageMeta(cwd);
+  config.name ||= pkg.name || basename(cwd);
+  config.version ||= pkg.version || "0.0.1";
 
-  const pkg = config.name && config.version ? {} : getPkg();
-
-  if (!config.name) {
-    config.name = pkg.name || basename(cwd);
-  }
-
-  const DEFAULT_VERSION = "0.0.1";
-  if (!config.version) {
-    config.version = pkg.version ?? DEFAULT_VERSION;
-  }
-
-  if (!config.entry) {
-    if (config.template === "theme") {
-      config.entry = {
-        js: resolveDefaultEntries(cwd, "js"),
-        css: resolveDefaultEntries(cwd, "css"),
-      };
-
-      // Must have js entry for theme
-      if (!config.entry.js || config.entry.js.length === 0) {
-        config.entry.js = resolveDefaultEntries(cwd, "js");
-      }
-
-      // Must have css entry for theme
-      if (!config.entry.css || config.entry.css.length === 0) {
-        config.entry.css = resolveDefaultEntries(cwd, "css");
-      }
-    } else {
-      config.entry = resolveDefaultEntries(cwd, "js");
-    }
-  }
+  config.entry ||= resolveConfigEntries(config.template, cwd);
 
   config.outDir = resolve(cwd, config.outDir || "./dist");
-
   config.esbuildOptions ??= {};
   config.serverConfig ??= {};
+
+  if (config.template === "custom-app") {
+    config.icon ??= {
+      default: resolveDefaultIcon(cwd),
+      active: resolveActiveIcon(cwd),
+    };
+  }
 
   return config;
 }
 
-function resolveDefaultEntries(cwd: string, type: "js" | "css"): string {
-  const resolveFile = (globs: string[]): string[] => {
-    for (const glob of globs) {
-      const matches = globSync(glob, { cwd, absolute: true });
-      if (matches.length > 0) return matches;
-    }
-    return [];
-  };
+function getPackageMeta(cwd: string): Record<string, any> {
+  try {
+    return JSON.parse(readFileSync(resolve(cwd, "package.json"), "utf-8"));
+  } catch {
+    return {};
+  }
+}
 
-  const globs = type === "js" ? JS_ENTRY_GLOBS : CSS_ENTRY_GLOBS;
-  const entries = resolveFile(globs);
-  const firstEntry = entries[0];
-
-  if (!firstEntry) {
-    throw new Error(
-      type === "js"
-        ? "No JavaScript entry found (src/app or src/index)."
-        : "No CSS entry found (src/app, src/index, or src/styles).",
-    );
+function resolveConfigEntries(template: string | undefined, cwd: string) {
+  if (template === "theme") {
+    return {
+      js: resolveDefaultEntry(cwd, "js"),
+      css: resolveDefaultEntry(cwd, "css"),
+    };
   }
 
-  return firstEntry;
+  if (template === "custom-app") {
+    return {
+      app: resolveDefaultEntry(cwd, "js-app-only"),
+      extension: resolveDefaultEntry(cwd, "js-extension-only"),
+    };
+  }
+
+  return resolveDefaultEntry(cwd, "js");
 }
+
+function resolveDefaultEntry(cwd: string, type: EntryType): string {
+  const globs = ENTRY_MAP[type];
+
+  for (const glob of globs) {
+    const matches = globSync(glob, { cwd, absolute: true });
+    if (matches.length > 0 && matches[0]) return matches[0];
+  }
+
+  const displayType = {
+    js: "JavaScript/TypeScript",
+    css: "CSS/Stylesheet",
+    "js-app-only": "JavaScript/TypeScript (Custom App)",
+    "js-extension-only": "JavaScript/TypeScript (Extension)",
+  }[type];
+
+  const expectedFiles = globs.map((g) => `  - ${g}`).join("\n");
+
+  throw new Error(
+    `No ${displayType} entry file found in your project.\n` +
+      `Please create one of the following files:\n${expectedFiles}`,
+  );
+}
+
+function resolveDefaultIcon(cwd: string): string {
+  for (const glob of ICON_GLOBS) {
+    const matches = globSync(glob, { cwd, absolute: true });
+
+    if (matches.length > 0 && matches[0]) {
+      return readFileSync(matches[0]).toString();
+    }
+  }
+
+  const expectedFiles = ICON_GLOBS.map((g) => `  - ${g}`).join("\n");
+
+  throw new Error(
+    `No icon file found in your project.\n` +
+      `Please create one of the following files:\n${expectedFiles}`,
+  );
+}
+function resolveActiveIcon(cwd: string): string {
+  for (const glob of ICON_ACTIVE_GLOBS) {
+    const matches = globSync(glob, { cwd, absolute: true });
+
+    if (matches.length > 0 && matches[0]) {
+      return readFileSync(matches[0]).toString();
+    }
+  }
+  return "";
+}
+export const getEnName = (configName: Config["name"]) =>
+  typeof configName === "string" ? configName : configName.en;

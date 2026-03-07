@@ -3,10 +3,14 @@ import type { Config } from "@/config/schema";
 import plugins from "@/esbuild/plugins";
 import type { Options as HandlerOpts } from "@/esbuild/plugins/spicetifyHandlers";
 import type { HMRServer } from "@/dev/server";
+import { urlSlugify } from "@/utils/common";
+import { getEnName } from "@/config";
 
 export type OutFiles = {
   js: string;
-  css: string | null;
+  css?: string;
+  jsExtension?: string;
+  manifest?: string;
 };
 
 export type File = {
@@ -41,7 +45,7 @@ export const getCommonPlugins = (
     dev?: boolean;
   },
 ): Plugin[] => {
-  const { template, minify, cache, name, version, buildOptions, outFiles, server, dev } = opts;
+  const { template, minify, cache, buildOptions, outFiles, server, dev } = opts;
 
   return [
     ...plugins.css({
@@ -58,9 +62,7 @@ export const getCommonPlugins = (
     }),
 
     plugins.wrapWithLoader({
-      name,
-      version,
-      type: template,
+      config: opts,
       cache,
       outFiles,
       server,
@@ -76,3 +78,41 @@ export const getCommonPlugins = (
     plugins.buildLogger({ cache }),
   ];
 };
+
+export function getEntryPoints(config: Config) {
+  if (config.template === "theme") {
+    return [config.entry.js, config.entry.css];
+  }
+
+  if (config.template === "custom-app") {
+    return [config.entry.app, config.entry.extension];
+  }
+
+  return [config.entry];
+}
+
+export function getOutFiles(config: Config): OutFiles {
+  switch (config.template) {
+    case "custom-app":
+      return {
+        js: "index.js",
+        css: "style.css",
+        jsExtension: "extension.js",
+        manifest: "manifest.json",
+      };
+
+    case "extension":
+      return {
+        js: `${urlSlugify(getEnName(config.name))}.js`,
+      };
+
+    case "theme":
+      return {
+        js: "theme.js",
+        css: "user.css",
+      };
+
+    default:
+      throw new Error("Unknown template");
+  }
+}

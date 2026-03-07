@@ -79,6 +79,7 @@ export function createPackageJSON(options: Options): PackageJSON {
       sc: "spicetify-creator",
       dev: "spicetify-creator dev",
       build: "spicetify-creator build",
+      "update-types": "spicetify-creator update-types",
     },
     dependencies: {},
     devDependencies: {

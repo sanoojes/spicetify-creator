@@ -5,12 +5,14 @@ import { parse } from "ini";
 import * as v from "valibot";
 import { type SpicetifyConfig, SpicetifyConfigSchema } from "@/utils/spicetify/schema";
 import { env } from "@/env";
+import { SKIP_SPICETIFY } from "@/constants";
 
 export function runSpice(args: string[]) {
   validateSpicetify(env.spicetifyBin);
   return spawnSync(env.spicetifyBin, args, { encoding: "utf-8" });
 }
 
+export const getCustomAppsDir = () => join(getSpiceDataPath(), "CustomApps");
 export const getExtensionDir = () => join(getSpiceDataPath(), "Extensions");
 export const getThemesDir = () => join(getSpiceDataPath(), "Themes");
 

@@ -1,14 +1,12 @@
 __ESBUILD__HAS_CSS &&
   (async () => {
     try {
-      const css = `{{INJECTED_CSS_HERE}}`;
-      if (css && css.trim().length !== 0) {
-        const style = document.createElement("style");
-        style.setAttribute("data-app", __ESBUILD__APP_ID);
-        style.textContent = css;
-        document.head.appendChild(style);
-      }
-    } catch {}
+      const css = __ESBUILD__INJECTED_CSS;
+      const style = document.createElement("style");
+      style.setAttribute("data-app", __ESBUILD__APP_ID);
+      style.textContent = css;
+      document.head.appendChild(style);
+    } catch { }
   })();
 (async () => {
   const _ID = `${__ESBUILD__APP_SLUG}-${__ESBUILD__APP_TYPE}`;
@@ -16,7 +14,6 @@ __ESBUILD__HAS_CSS &&
   window.SpiceGlobals[_ID] = {
     id: __ESBUILD__APP_ID,
     version: __ESBUILD__APP_VERSION,
-    hash: __ESBUILD__APP_HASH,
   };
   const { id: appId, version: v } = window.SpiceGlobals[_ID];
   const _wait = (p, a = 0) =>

@@ -1,10 +1,16 @@
 import { resolve } from "node:path";
 import { type BuildOptions, context } from "esbuild";
 import type { BuildCLIOptions } from "@/commands/build";
-import { loadConfig } from "@/config";
+import { getEnName, loadConfig } from "@/config";
 import type { Config } from "@/config/schema";
-import { defaultBuildOptions, getCommonPlugins, type BuildCache } from "@/esbuild";
-import { pc, urlSlugify } from "@/utils/common";
+import {
+  defaultBuildOptions,
+  getCommonPlugins,
+  getEntryPoints,
+  getOutFiles,
+  type BuildCache,
+} from "@/esbuild";
+import { pc, varSlugify } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
 import { DEV_MODE_VAR_NAME } from "@/constants";
 
@@ -49,12 +55,7 @@ export async function build(options: BuildCLIOptions) {
 }
 
 function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptions {
-  const entryPoints = (() => {
-    if (config.template === "theme") {
-      return [config.entry.js, config.entry.css];
-    }
-    return [config.entry];
-  })();
+  const entryPoints = getEntryPoints(config);
 
   const minify = options.watch ? false : options.minify;
 
@@ -66,16 +67,14 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
     changed: new Set(),
     hasChanges: true,
   };
-  const outFiles = {
-    js: config.template === "extension" ? `${urlSlugify(config.name)}.js` : "theme.js",
-    css: config.template === "theme" ? "user.css" : null,
-  };
+  const outFiles = getOutFiles(config);
 
   const overrides: BuildOptions = {
     ...defaultBuildOptions,
     outdir: outDir,
     format: "esm",
     minify,
+    globalName: varSlugify(getEnName(config.name)),
     sourcemap: false,
     external: [
       ...(config.esbuildOptions?.external ? config.esbuildOptions.external : []),

@@ -63,7 +63,6 @@
   const script = document.createElement("script");
   script.id = JS_ID;
   script.src = SERVER + JS_PATH;
-  script.type = "module";
   document.body.appendChild(script);
 
   connect();

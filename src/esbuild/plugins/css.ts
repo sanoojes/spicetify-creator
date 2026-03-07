@@ -35,7 +35,6 @@ export function css({
         {
           getJSON: () => {},
           generateScopedName: "[name]__[local]___[hash:base64:5]",
-          localsConvention: "camelCaseOnly",
         },
         postCssPlugins,
       ),
@@ -46,6 +45,8 @@ export function css({
       type,
       async transform(css, _resolveDir, filePath) {
         const start = performance.now();
+
+        logger.log("processing:", filePath, "type:", type);
 
         const result = await postcss(postCssPlugins).process(css, {
           from: filePath,

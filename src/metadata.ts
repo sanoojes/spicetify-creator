@@ -17,7 +17,7 @@ export const toOptions = <T extends string>(metadata: Metadata<T>[]) =>
 
 export type TemplateType = (typeof templateTypes)[number];
 export type TemplateMetadata = Metadata<TemplateType>;
-export const templateTypes = ["extension", "theme"] as const;
+export const templateTypes = ["extension", "theme", "custom-app"] as const;
 export const templates: TemplateMetadata[] = templateTypes.map((dir) => {
   const meta_file = dist(`templates/${dir}/meta.json`, import.meta.url);
   const { title, description } = JSON.parse(readFileSync(meta_file, "utf8"));
@@ -96,4 +96,8 @@ export const frameworks: FrameworkMetadata[] = frameworkTypes.map((name) => ({
 export const frameworkOptions = toOptions(frameworks);
 
 export const liveReloadFilePath = dist(`templates/liveReload.js`, import.meta.url);
-export const templateFilePath = dist("templates/wrapper.js", import.meta.url);
+export const templateWrapperFilePath = dist("templates/wrapper.js", import.meta.url);
+export const templateCustomAppWrapperFilePath = dist(
+  "templates/customAppWrapper.js",
+  import.meta.url,
+);

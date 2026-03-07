@@ -2,14 +2,19 @@ import { writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import type { Plugin } from "esbuild";
 import type { Config } from "@/config/schema";
-import { CHECK, CROSS } from "@/constants";
+import { CHECK, CROSS, SKIP_SPICETIFY } from "@/constants";
 import { pc, urlSlugify } from "@/utils/common";
 import { mkdirp } from "@/utils/fs";
-import { getExtensionDir, getSpicetifyConfig, getThemesDir, runSpice } from "@/utils/spicetify";
+import {
+  getCustomAppsDir,
+  getExtensionDir,
+  getSpicetifyConfig,
+  getThemesDir,
+  runSpice,
+} from "@/utils/spicetify";
 import type { BuildCache } from "@/esbuild";
 import { createLogger, type Logger } from "@/utils/logger";
-
-const skipSpicetify = process.env.SPICETIFY_SKIP === "true" || process.env.CI === "true";
+import { getEnName } from "@/config";
 
 export type Options = {
   copy?: boolean;
@@ -30,7 +35,7 @@ export const spicetifyHandler = ({
   config,
   options,
   cache,
-  logger = createLogger("plugin:spicetifyHandler"),
+  logger = createLogger("plugin:spicetify-handler"),
 }: BuildHandlerOptions): Plugin => ({
   name: "spice_internal__spicetify-build-handler",
 
@@ -40,10 +45,13 @@ export const spicetifyHandler = ({
     let hasAppliedOnce = false;
 
     const isExtension = config.template === "extension";
-    const identifier = isExtension ? `${urlSlugify(config.name)}.js` : urlSlugify(config.name);
+    const isCustomApp = config.template === "custom-app";
+    const identifier = isExtension
+      ? `${urlSlugify(config.name)}.js`
+      : urlSlugify(getEnName(config.name));
 
-    if (skipSpicetify) {
-      logger.info(pc.yellow("SPICETIFY_SKIP=true, skipping spicetify operations"));
+    if (SKIP_SPICETIFY) {
+      logger.info(pc.yellow("skipping spicetify operations"));
 
       build.onEnd(async (result) => {
         if (result.errors.length > 0) return;
@@ -83,26 +91,24 @@ export const spicetifyHandler = ({
     logger.debug(pc.green("Spicetify Config: "), spiceConfig);
 
     if (apply) {
-      const defaultTheme = spiceConfig.Setting.current_theme;
+      const defaultTheme = spiceConfig?.Setting?.current_theme || "SpicetifyDefault";
 
-      build.onStart(() => {
-        const spiceIdentifier = remove ? `${identifier}-` : identifier;
-
-        if (isExtension) {
-          runSpice(["config", "extensions", spiceIdentifier]);
-        } else {
-          runSpice(["config", "current_theme", spiceIdentifier]);
-        }
-      });
+      const spiceIdentifier = remove ? `${identifier}-` : identifier;
+      const var_name = isExtension ? "extensions" : isCustomApp ? "custom_apps" : "current_theme";
+      runSpice(["config", var_name, spiceIdentifier]);
 
       if (!isExtension && !remove) {
-        const resetTheme = () => {
-          runSpice(["config", "current_theme", defaultTheme]);
+        const cleanup = () => {
+          if (isCustomApp) {
+            runSpice(["config", "custom_apps", `${identifier}-`]);
+          } else {
+            runSpice(["config", "current_theme", defaultTheme]);
+          }
           process.exit();
         };
 
-        process.once("SIGINT", resetTheme);
-        process.once("SIGTERM", resetTheme);
+        process.once("SIGINT", cleanup);
+        process.once("SIGTERM", cleanup);
       }
     }
 
@@ -115,7 +121,13 @@ export const spicetifyHandler = ({
 
       const destDirs = [resolve(outDir)];
       if (copy) {
-        destDirs.push(isExtension ? getExtensionDir() : resolve(getThemesDir(), identifier));
+        destDirs.push(
+          isExtension
+            ? getExtensionDir()
+            : isCustomApp
+              ? resolve(getCustomAppsDir(), identifier)
+              : resolve(getThemesDir(), identifier),
+        );
       }
 
       const tasks: Promise<void>[] = [];
@@ -151,10 +163,10 @@ export const spicetifyHandler = ({
       const shouldApply = apply && cache.hasChanges && (!applyOnce || !hasAppliedOnce);
 
       if (shouldApply) {
-        const { stderr, status } = runSpice(["apply"]);
+        const { stdout, stderr, status } = runSpice(["apply"]);
 
         if (status !== 0) {
-          logger.error(pc.red(`${CROSS} Spicetify apply failed: ${stderr}`));
+          logger.error(pc.red(`${CROSS} Spicetify apply failed:`), stdout, stderr);
         } else {
           hasAppliedOnce = true;
         }

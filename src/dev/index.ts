@@ -1,13 +1,20 @@
 import { resolve } from "node:path";
 import { type BuildOptions, context } from "esbuild";
 import type { DevCLIOptions } from "@/commands/dev";
-import { loadConfig } from "@/config";
+import { loadConfig, getEnName } from "@/config";
 import type { Config } from "@/config/schema";
 import { createHmrServer, type HMRServer } from "@/dev/server";
-import { defaultBuildOptions, getCommonPlugins, type BuildCache, type OutFiles } from "@/esbuild";
-import { pc, urlSlugify } from "@/utils/common";
+import {
+  defaultBuildOptions,
+  getCommonPlugins,
+  getEntryPoints,
+  getOutFiles,
+  type BuildCache,
+  type OutFiles,
+} from "@/esbuild";
+import { pc } from "@/utils/common";
 import { logger } from "@/utils/logger";
-import { injectHMRExtension } from "@/utils/hmr";
+import { injectHMRExtension, injectHMRCustomApp } from "@/utils/hmr";
 import { DEV_MODE_VAR_NAME } from "@/constants";
 
 export const DEFAULT_PORT = 54321;
@@ -33,12 +40,13 @@ export async function dev(options: DevCLIOptions) {
       });
       await server.start();
 
-      const outFiles = {
-        js: config.template === "extension" ? `${urlSlugify(config.name)}.js` : "theme.js",
-        css: config.template === "theme" ? "user.css" : null,
-      };
+      const outFiles = getOutFiles(config);
 
-      await injectHMRExtension(server.link, server.wsLink, outFiles);
+      if (config.template === "custom-app") {
+        await injectHMRCustomApp(server.link, server.wsLink, outFiles, config);
+      } else {
+        await injectHMRExtension(server.link, server.wsLink, outFiles);
+      }
 
       ctx = await context(getJSDevOptions(config, { ...options, outFiles, server }));
 
@@ -63,12 +71,7 @@ export async function dev(options: DevCLIOptions) {
 }
 type GetDevOptions = DevCLIOptions & { outFiles: OutFiles; server: HMRServer };
 function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
-  const entryPoints = (() => {
-    if (config.template === "theme") {
-      return [config.entry.js, config.entry.css];
-    }
-    return [config.entry];
-  })();
+  const entryPoints = getEntryPoints(config);
 
   const minify = false;
 
@@ -90,7 +93,7 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
     ],
     define: {
       [DEV_MODE_VAR_NAME]: "true",
-      [config.devModeVarName]: "true",
+      ...(config.devModeVarName ? { [config.devModeVarName]: "true" } : {}),
       ...config.esbuildOptions.define,
     },
     plugins: [
@@ -101,7 +104,9 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
         cache,
         buildOptions: {
           copy: true,
-          remove: true,
+          apply: false,
+          applyOnce: false,
+          remove: config.template !== "custom-app",
           outDir,
         },
         dev: true,

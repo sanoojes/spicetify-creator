@@ -51,13 +51,22 @@ export class Logger {
   }
 
   error(...errors: unknown[]) {
-    this.add(console.error, errors);
+    const formatted: unknown[] = [];
 
     for (const err of errors) {
-      if (err instanceof Error && this.isDev && err.stack) {
-        console.error(pc.dim(err.stack.split("\n").slice(1).join("\n")));
+      if (err instanceof Error) {
+        formatted.push(pc.red(err.message));
+
+        if (this.isDev && err.stack) {
+          const stack = err.stack.split("\n").slice(1).join("\n");
+          formatted.push(pc.dim(stack));
+        }
+      } else {
+        formatted.push(err);
       }
     }
+
+    this.add(console.error, formatted);
   }
 
   log(...args: unknown[]) {

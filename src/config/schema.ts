@@ -2,6 +2,7 @@ import type { BuildOptions as _ESBuildOptions } from "esbuild";
 import * as v from "valibot";
 import { frameworkTypes, linterTypes } from "@/metadata";
 import { packageManagers } from "@/utils/package-manager";
+import { CUSTOM_APP_NAME_LOCALES } from "@/constants";
 
 type EsBuildOmitted = "bundle" | "entryPoints";
 export type ESBuildOptions = Omit<_ESBuildOptions, EsBuildOmitted>;
@@ -21,28 +22,53 @@ const AssetEntrySchema = v.object({
   css: EntryFileSchema,
 });
 
+const CustomAppEntrySchema = v.object({
+  extension: EntryFileSchema,
+  app: EntryFileSchema,
+});
+
+const LocaleNameSchema = v.intersect([
+  v.object({
+    en: v.string(),
+  }),
+  v.record(v.picklist(CUSTOM_APP_NAME_LOCALES), v.string()),
+]);
+
 const ExtensionTemplateSchema = v.object({
+  name: v.string(),
   template: v.literal("extension"),
   entry: EntryFileSchema,
 });
 
 const ThemeTemplateSchema = v.object({
+  name: v.string(),
   template: v.literal("theme"),
   entry: AssetEntrySchema,
+});
+
+const CustomAppTemplateSchema = v.object({
+  name: v.union([v.string(), LocaleNameSchema]),
+  icon: v.object({
+    default: v.string(),
+    active: v.optional(v.string()),
+  }),
+  template: v.literal("custom-app"),
+  entry: CustomAppEntrySchema,
 });
 
 const TemplateSpecificSchema = v.variant("template", [
   ExtensionTemplateSchema,
   ThemeTemplateSchema,
+  CustomAppTemplateSchema,
 ]);
 
 const TemplateSpecificOptionalSchema = v.variant("template", [
   v.partial(ExtensionTemplateSchema),
   v.partial(ThemeTemplateSchema),
+  v.partial(CustomAppTemplateSchema),
 ]);
 
 const RequiredCommonSchema = v.object({
-  name: v.string(),
   outDir: v.string(),
   linter: v.picklist(linterTypes),
   framework: v.picklist(frameworkTypes),

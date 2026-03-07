@@ -1,6 +1,5 @@
 import styles from "@/css/app.module.scss";
 import { useState } from "react";
-import "@/app.css";
 
 const App = () => {
   const [count, setCount] = useState(0);

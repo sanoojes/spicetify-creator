@@ -196,7 +196,7 @@ export async function create(cwd: string, options: Options) {
   try {
     mkdirp(cwd);
     setupTemplateFiles(options, cwd);
-    await updateTypes(false);
+    await updateTypes(false, cwd);
 
     const pkgJSON = createPackageJSON(options);
     writePackageJSON(pkgJSON, cwd);

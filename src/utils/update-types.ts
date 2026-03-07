@@ -1,7 +1,7 @@
 import { logger } from "@/utils/logger";
 import { log, spinner } from "@clack/prompts";
 import { mkdir, writeFile } from "fs/promises";
-import { dirname } from "path";
+import { dirname, join } from "path";
 
 type Download = {
   from: string;
@@ -24,19 +24,19 @@ const downloads: Record<string, Download> = {
   },
 };
 
-export async function updateTypes(isUpdating = true) {
+export async function updateTypes(isUpdating = true, cwd: string = process.cwd()) {
   const s = spinner();
 
   s.start(`${isUpdating ? "Updating" : "Creating"} Types...`);
 
   await Promise.all(
-    Object.entries(downloads).map(([name, download]) => downloadFile(name, download, isUpdating)),
+    Object.entries(downloads).map(([name, download]) => downloadFile(name, download, isUpdating, cwd)),
   );
 
   s.stop(`${isUpdating ? "Updated" : "Created"} Types!`);
 }
 
-async function downloadFile(name: string, { from, to, action }: Download, isUpdating: boolean) {
+async function downloadFile(name: string, { from, to, action }: Download, isUpdating: boolean, cwd: string) {
   try {
     const res = await fetch(from);
     if (!res.ok) {
@@ -49,11 +49,12 @@ async function downloadFile(name: string, { from, to, action }: Download, isUpda
       text = await action(text);
     }
 
-    await mkdir(dirname(to), { recursive: true });
-    await writeFile(to, text, "utf8");
+    const fullPath = join(cwd, to);
+    await mkdir(dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, text, "utf8");
 
     const actionLog = isUpdating ? "updated" : "created";
-    logger.log(`${name}.d.ts ${actionLog} (${from} -> ${to})`);
+    logger.log(`${name}.d.ts ${actionLog} (${from} -> ${fullPath})`);
   } catch (e) {
     log.error(`${name} failed`);
     console.error(e);

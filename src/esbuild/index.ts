@@ -16,6 +16,7 @@ export type OutFiles = {
 export type File = {
   name: string;
   contents: Uint8Array<ArrayBufferLike>;
+  hash?: string;
 };
 
 export type BuildCache = {
@@ -47,10 +48,12 @@ export const getCommonPlugins = (
 ): Plugin[] => {
   const { template, minify, cache, buildOptions, outFiles, server, dev } = opts;
 
+  const inline = !dev && template === "extension";
+  console.log("css is ", inline);
   return [
     ...plugins.css({
       minify,
-      inline: !dev && template === "extension",
+      inline,
     }),
 
     plugins.externalGlobal({
@@ -91,7 +94,7 @@ export function getEntryPoints(config: Config) {
   return [config.entry];
 }
 
-export function getOutFiles(config: Config): OutFiles {
+export function getOutFiles(config: Config, isDev = false): OutFiles {
   switch (config.template) {
     case "custom-app":
       return {
@@ -104,6 +107,7 @@ export function getOutFiles(config: Config): OutFiles {
     case "extension":
       return {
         js: `${urlSlugify(getEnName(config.name))}.js`,
+        css: isDev ? "app.css" : undefined,
       };
 
     case "theme":

@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { type BuildOptions, context } from "esbuild";
 import type { DevCLIOptions } from "@/commands/dev";
-import { loadConfig, getEnName } from "@/config";
+import { loadConfig } from "@/config";
 import type { Config } from "@/config/schema";
 import { createHmrServer, type HMRServer } from "@/dev/server";
 import {
@@ -40,7 +40,7 @@ export async function dev(options: DevCLIOptions) {
       });
       await server.start();
 
-      const outFiles = getOutFiles(config);
+      const outFiles = getOutFiles(config, true);
 
       if (config.template === "custom-app") {
         await injectHMRCustomApp(server.link, server.wsLink, outFiles, config);

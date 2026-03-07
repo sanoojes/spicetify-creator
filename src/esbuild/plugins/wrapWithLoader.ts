@@ -138,21 +138,46 @@ export default function render() {
 
               let combinedCode = `${final.text}${dev ? `export default () => ${globalName}.default();` : `var render = () => ${globalName}.default();`}\n`;
 
-              cache.files.set(renamedPath, {
-                contents: Buffer.from(combinedCode),
-                name: targetName,
-              });
-              cache.changed.add(renamedPath);
-              cache.hasChanges = true;
-              filesChanged.push(renamedPath);
+              const nextBuffer = Buffer.from(combinedCode);
+              const existingFile = cache.files.get(renamedPath);
+              const nextHash = final.hash;
+
+              if (
+                !existingFile ||
+                existingFile.hash !== nextHash ||
+                config.template === "custom-app"
+              ) {
+                cache.files.set(renamedPath, {
+                  contents: nextBuffer,
+                  name: targetName,
+                  hash: final.hash,
+                });
+                cache.changed.add(renamedPath);
+                cache.hasChanges = true;
+                filesChanged.push(renamedPath);
+              }
               return;
             }
 
             if (!isJs) {
-              cache.files.set(renamedPath, { name: targetName, contents: file.contents });
-              cache.changed.add(renamedPath);
-              cache.hasChanges = true;
-              filesChanged.push(renamedPath);
+              const nextBuffer = Buffer.from(file.contents);
+              const existingFile = cache.files.get(renamedPath);
+              const nextHash = file.hash;
+
+              if (
+                !existingFile ||
+                existingFile.hash !== nextHash ||
+                config.template === "custom-app"
+              ) {
+                cache.files.set(renamedPath, {
+                  name: targetName,
+                  contents: nextBuffer,
+                  hash: file.hash,
+                });
+                cache.changed.add(renamedPath);
+                cache.hasChanges = true;
+                filesChanged.push(renamedPath);
+              }
               return;
             }
 
@@ -179,11 +204,23 @@ export default function render() {
             });
 
             const nextBuffer = Buffer.from(template);
+            const existingFile = cache.files.get(renamedPath);
+            const nextHash = file.hash;
 
-            cache.files.set(renamedPath, { name: targetName, contents: nextBuffer });
-            cache.changed.add(renamedPath);
-            cache.hasChanges = true;
-            filesChanged.push(renamedPath);
+            if (
+              !existingFile ||
+              existingFile.hash !== nextHash ||
+              config.template === "custom-app"
+            ) {
+              cache.files.set(renamedPath, {
+                name: targetName,
+                contents: nextBuffer,
+                hash: file.hash,
+              });
+              cache.changed.add(renamedPath);
+              cache.hasChanges = true;
+              filesChanged.push(renamedPath);
+            }
           });
 
           await Promise.all(transformPromises);
@@ -205,10 +242,12 @@ export default function render() {
 
             if (currentHash !== previousManifestHash) {
               previousManifestHash = currentHash;
+              const manifestBuffer = Buffer.from(manifestString);
 
               cache.files.set(manifestPath, {
-                contents: Buffer.from(manifestString),
+                contents: manifestBuffer,
                 name: "manifest.json",
+                hash: currentHash,
               });
               cache.changed.add(manifestPath);
               cache.hasChanges = true;

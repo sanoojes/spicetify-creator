@@ -1,7 +1,7 @@
 import type { Plugin, BuildResult, OutputFile } from "esbuild";
 import { transform, build as esbuild } from "esbuild";
 import { varSlugify } from "@/utils/common";
-import { templateWrapperFilePath, type TemplateType } from "@/metadata";
+import { customAppEntryFilePath, templateWrapperFilePath, type TemplateType } from "@/metadata";
 import type { BuildCache, OutFiles } from "@/esbuild";
 import { createLogger, Logger } from "@/utils/logger";
 import { join, resolve } from "node:path";
@@ -91,15 +91,7 @@ export function wrapWithLoader({
 
             if (type === "custom-app" && targetName === outFiles.js && isJs) {
               const globalName = varSlugify(getEnName(config.name));
-              const entryCode = `
-import App from "virtual:app";
-import React from "react";
-
-export default function render() {
-  return <App />;
-}
-`;
-
+              const entryCode = readFileSync(customAppEntryFilePath);
               const result = await esbuild({
                 bundle: true,
                 write: false,

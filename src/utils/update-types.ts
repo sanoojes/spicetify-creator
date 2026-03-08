@@ -30,13 +30,20 @@ export async function updateTypes(isUpdating = true, cwd: string = process.cwd()
   s.start(`${isUpdating ? "Updating" : "Creating"} Types...`);
 
   await Promise.all(
-    Object.entries(downloads).map(([name, download]) => downloadFile(name, download, isUpdating, cwd)),
+    Object.entries(downloads).map(([name, download]) =>
+      downloadFile(name, download, isUpdating, cwd),
+    ),
   );
 
   s.stop(`${isUpdating ? "Updated" : "Created"} Types!`);
 }
 
-async function downloadFile(name: string, { from, to, action }: Download, isUpdating: boolean, cwd: string) {
+async function downloadFile(
+  name: string,
+  { from, to, action }: Download,
+  isUpdating: boolean,
+  cwd: string,
+) {
   try {
     const res = await fetch(from);
     if (!res.ok) {

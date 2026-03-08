@@ -2,7 +2,6 @@ import { resolve } from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import { transform } from "esbuild";
 import { CHECK, CROSS } from "@/constants";
-import { env } from "@/env";
 import { pc, urlSlugify } from "@/utils/common";
 import { mkdirp } from "@/utils/fs";
 import { getSpicetifyConfig, getExtensionDir, getCustomAppsDir, runSpice } from "@/utils/spicetify";
@@ -169,7 +168,7 @@ const render = () => {
 
     const manifestPath = resolve(destDir, "manifest.json");
     const manifest = {
-      name: identifier,
+      name: config.name,
       subfiles: [],
       subfiles_extension: [outFiles.jsExtension ?? "extension.js"],
       icon: config.icon.default,

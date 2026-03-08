@@ -38,7 +38,7 @@ export async function loadConfig(cb: ConfigCallback) {
   const watcher = await watchConfig<FileConfig>({
     name: "spice",
     defaults: CONFIG_DEFAULTS,
-    configFileRequired: false,
+    configFileRequired: true,
     packageJson: true,
     async onUpdate({ newConfig }) {
       const resolved = await getResolvedConfig(newConfig.config);

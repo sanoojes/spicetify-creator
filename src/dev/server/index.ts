@@ -125,8 +125,20 @@ export async function createHmrServer(config: HMRServerConfig, logger = createLo
         });
       }),
 
-    stop: () =>
+    stop: async () =>
       new Promise<void>((resolve, reject) => {
+        if (!isRunning) return resolve();
+
+        for (const client of clients) {
+          client.terminate();
+        }
+        clients.clear();
+
+        wss.close();
+
+        if ("closeAllConnections" in httpServer) {
+          httpServer.closeAllConnections();
+        }
         httpServer.close((err) => {
           if (err) return reject(err);
           isRunning = false;

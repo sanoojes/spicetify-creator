@@ -26,7 +26,7 @@ export async function dev(options: DevCLIOptions) {
 
   let ctx: Awaited<ReturnType<typeof context>> | undefined;
   let server: HMRServer | undefined = undefined;
-  loadConfig(async (config, isNewUpdate) => {
+  await loadConfig(async (config, isNewUpdate) => {
     if (isNewUpdate) {
       logger.clear();
       logger.info(pc.green("Config updated, reloading..."));
@@ -58,14 +58,10 @@ export async function dev(options: DevCLIOptions) {
     }
 
     return async () => {
-      try {
-        await ctx?.dispose();
-        ctx = undefined;
+      await ctx?.dispose();
+      ctx = undefined;
 
-        await server?.stop();
-      } finally {
-        process.exit();
-      }
+      await server?.stop();
     };
   });
 }

@@ -81,6 +81,10 @@ export class Logger {
 
   clear() {
     if (!process.stdout.isTTY || process.env.CI) return;
+    if (this.isDev) {
+      this.log("clear skipped");
+      return;
+    }
     readline.cursorTo(process.stdout, 0, 0);
     readline.clearScreenDown(process.stdout);
   }

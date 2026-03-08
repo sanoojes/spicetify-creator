@@ -25,7 +25,7 @@ type LoaderOptions = {
 type CustomAppManifest = {
   name: string | Record<string, string>;
   icon: string;
-  "active-icon": string;
+  activeIcon: string;
   subfiles: string[];
   subfiles_extension: string[];
 };
@@ -218,15 +218,18 @@ export function wrapWithLoader({
           await Promise.all(transformPromises);
 
           if (type === "custom-app") {
-            const icon = config.icon;
+            const icon = readFileSync(config.icon.default).toString();
+            const activeIcon = config.icon.active
+              ? readFileSync(config.icon.active).toString()
+              : icon;
             const manifestPath = join(outdir, "manifest.json");
 
             const manifest: CustomAppManifest = {
               name: config.name,
               subfiles: [],
               subfiles_extension: ["extension.js"],
-              icon: icon.default,
-              "active-icon": icon.active ?? "",
+              icon,
+              activeIcon,
             };
 
             const manifestString = JSON.stringify(manifest, null, 2);

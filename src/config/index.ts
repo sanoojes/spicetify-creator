@@ -1,16 +1,18 @@
+import * as v from "valibot";
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { watchConfig } from "c12";
 import { globSync } from "tinyglobby";
 import { type Config, type FileConfig, OptionsSchema } from "@/config/schema";
 import { getPackageManager } from "@/utils/package-manager";
-import { safeParse } from "@/utils/schema";
-import { pc } from "@/utils/common";
+import { pc, urlSlugify } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
+import { runSpice } from "@/utils/spicetify";
 import { ENTRY_MAP, ICON_ACTIVE_GLOBS, ICON_GLOBS, type EntryType } from "@/config/globs";
 
 const logger = createLogger("config");
 
+let previousConfig: Config | undefined;
 const CONFIG_DEFAULTS = {
   outDir: "./dist",
   linter: "biome",
@@ -29,10 +31,14 @@ export async function loadConfig(cb: ConfigCallback) {
   let cleanup: CleanupFn | undefined;
 
   const runCb = async (config: Config, isUpdate: boolean) => {
+    if (isUpdate && previousConfig) {
+      await cleanupSpicetifyConfig();
+    }
     if (typeof cleanup === "function") {
       await cleanup();
     }
     cleanup = await cb(config, isUpdate);
+    previousConfig = config;
   };
 
   const watcher = await watchConfig<FileConfig>({
@@ -41,8 +47,12 @@ export async function loadConfig(cb: ConfigCallback) {
     configFileRequired: true,
     packageJson: true,
     async onUpdate({ newConfig }) {
-      const resolved = await getResolvedConfig(newConfig.config);
-      await runCb(resolved, true);
+      try {
+        const resolved = await getResolvedConfig(newConfig.config, { exitOnError: false });
+        await runCb(resolved, true);
+      } catch {
+        logger.error(pc.red("Config validation failed, keeping previous configuration"));
+      }
     },
   });
 
@@ -52,15 +62,25 @@ export async function loadConfig(cb: ConfigCallback) {
   return watcher;
 }
 
-export async function getResolvedConfig(config: FileConfig): Promise<Config> {
-  try {
-    const resolvedContext = await resolveContext(config);
-    return safeParse(OptionsSchema, resolvedContext, "Config");
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    logger.error(pc.red(`Failed to load configuration: ${message}`));
+export async function getResolvedConfig(
+  config: FileConfig,
+  { exitOnError = true }: { exitOnError?: boolean } = {},
+): Promise<Config> {
+  const resolvedContext = await resolveContext(config);
+  const result = v.safeParse(OptionsSchema, resolvedContext);
+
+  if (result.success) return result.output;
+
+  logger.error(pc.red("Failed to load configuration:"));
+  result.issues.forEach((issue) => {
+    const path = issue.path?.map((p) => p.key).join(".") || "input";
+    logger.error(`${pc.dim(" └─")} ${pc.yellow(path)}: ${pc.white(issue.message)}`);
+  });
+
+  if (exitOnError) {
     process.exit(1);
   }
+  throw new Error("Invalid configuration");
 }
 
 async function resolveContext(config: FileConfig): Promise<FileConfig> {
@@ -163,3 +183,30 @@ function resolveActiveIcon(cwd: string): string {
 }
 export const getEnName = (configName: Config["name"]) =>
   typeof configName === "string" ? configName : configName.en;
+
+function getSpiceIdentifier(config: Config): string {
+  if (config.template === "extension") {
+    return `${urlSlugify(config.name)}.js`;
+  }
+  if (config.template === "custom-app") {
+    return urlSlugify(getEnName(config.name));
+  }
+  return urlSlugify(getEnName(config.name));
+}
+
+function getSpiceVarName(template: Config["template"]): string {
+  if (template === "extension") return "extensions";
+  if (template === "custom-app") return "custom_apps";
+  return "current_theme";
+}
+
+async function cleanupSpicetifyConfig() {
+  if (!previousConfig) return;
+
+  const prevIdentifier = getSpiceIdentifier(previousConfig);
+  const varName = getSpiceVarName(previousConfig.template);
+
+  logger.debug(`Cleaning up previous spicetify config: ${varName} ${prevIdentifier}-`);
+  runSpice(["config", varName, `${prevIdentifier}-`]);
+  runSpice(["apply"]);
+}

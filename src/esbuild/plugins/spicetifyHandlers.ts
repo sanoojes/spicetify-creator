@@ -2,7 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import type { Plugin } from "esbuild";
 import type { Config } from "@/config/schema";
-import { CHECK, CROSS, SKIP_SPICETIFY } from "@/constants";
+import { CHECK, CROSS } from "@/constants";
 import { pc, urlSlugify } from "@/utils/common";
 import { mkdirp } from "@/utils/fs";
 import {
@@ -15,6 +15,7 @@ import {
 import type { BuildCache } from "@/esbuild";
 import { createLogger, type Logger } from "@/utils/logger";
 import { getEnName } from "@/config";
+import { env } from "@/env";
 
 export type Options = {
   copy?: boolean;
@@ -50,7 +51,7 @@ export const spicetifyHandler = ({
       ? `${urlSlugify(config.name)}.js`
       : urlSlugify(getEnName(config.name));
 
-    if (SKIP_SPICETIFY) {
+    if (env.skipSpicetify) {
       logger.info(pc.yellow("skipping spicetify operations"));
 
       build.onEnd(async (result) => {

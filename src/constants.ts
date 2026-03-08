@@ -11,8 +11,6 @@ export const CHECK = pc.bold(pc.green("✔"));
 export const CROSS = pc.bold(pc.red("✖"));
 export const WARN = pc.bold(pc.yellow("⚠"));
 
-export const SKIP_SPICETIFY = process.env.SPICETIFY_SKIP === "true" || process.env.CI === "true";
-
 export const VALID_PROJECT_FILES = new Set([
   ".DS_Store",
   ".git",

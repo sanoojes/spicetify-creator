@@ -9,7 +9,6 @@ import type {
   PackageJSON,
   PackageSlice,
 } from "@/create/types/package";
-import { env } from "@/env";
 import { mkdirp } from "@/utils/fs";
 
 const FRAMEWORKS: FrameworkTemplate = {
@@ -83,7 +82,7 @@ export function createPackageJSON(options: Options): PackageJSON {
     },
     dependencies: {},
     devDependencies: {
-      "@spicetify/creator": env.isInternal ? "link:@spicetify/creator" : "latest",
+      "@spicetify/creator": "latest",
     },
   };
 

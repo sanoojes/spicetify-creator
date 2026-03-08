@@ -166,13 +166,15 @@ const render = () => {
 
     writeFileSync(extensionJsPath, extensionCode);
 
+    const icon = readFileSync(config.icon.default).toString();
+    const activeIcon = config.icon.active ? readFileSync(config.icon.active).toString() : icon;
     const manifestPath = resolve(destDir, "manifest.json");
     const manifest = {
       name: config.name,
       subfiles: [],
       subfiles_extension: [outFiles.jsExtension ?? "extension.js"],
-      icon: config.icon.default,
-      "active-icon": config.icon.active ?? config.icon.default,
+      icon,
+      activeIcon,
     };
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 

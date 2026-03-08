@@ -160,7 +160,7 @@ function resolveDefaultIcon(cwd: string): string {
     const matches = globSync(glob, { cwd, absolute: true });
 
     if (matches.length > 0 && matches[0]) {
-      return readFileSync(matches[0]).toString();
+      return matches[0];
     }
   }
 
@@ -176,7 +176,7 @@ function resolveActiveIcon(cwd: string): string {
     const matches = globSync(glob, { cwd, absolute: true });
 
     if (matches.length > 0 && matches[0]) {
-      return readFileSync(matches[0]).toString();
+      return matches[0];
     }
   }
   return "";

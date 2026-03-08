@@ -49,7 +49,6 @@ export const getCommonPlugins = (
   const { template, minify, cache, buildOptions, outFiles, server, dev } = opts;
 
   const inline = !dev && template === "extension";
-  console.log("css is ", inline);
   return [
     ...plugins.css({
       minify,

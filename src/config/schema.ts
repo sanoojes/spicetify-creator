@@ -47,7 +47,10 @@ const ThemeTemplateSchema = v.object({
 });
 
 const CustomAppTemplateSchema = v.object({
-  name: v.union([v.string(), LocaleNameSchema]),
+  name: v.union(
+    [v.string(), LocaleNameSchema],
+    "Name must be a string or a translations object containing the required 'en' locale.",
+  ),
   icon: v.object({
     default: v.string(),
     active: v.optional(v.string()),

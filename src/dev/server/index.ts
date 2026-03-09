@@ -8,10 +8,10 @@ import { pc } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
 import { extname, resolve, join } from "node:path";
 import { createReadStream, existsSync, statSync } from "node:fs";
+import type { HMRMessage } from "@/dev/server/types";
+export type { HMRServer } from "@/dev/server/types";
 
 export const WS_PATH = "/spicetify-creator";
-
-export type HMRServer = Awaited<ReturnType<typeof createHmrServer>>;
 
 export async function createHmrServer(config: HMRServerConfig, logger = createLogger("hmrServer")) {
   const { port = DEFAULT_PORT, serveDir = outDir } = config;
@@ -103,8 +103,8 @@ export async function createHmrServer(config: HMRServerConfig, logger = createLo
     });
   });
 
-  function broadcast(data: string[]) {
-    const message = typeof data === "string" ? data : JSON.stringify(data);
+  function broadcast(data: HMRMessage) {
+    const message = JSON.stringify(data);
 
     for (const client of clients) {
       if (client.readyState === WebSocket.OPEN) {

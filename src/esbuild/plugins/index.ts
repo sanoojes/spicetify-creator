@@ -1,4 +1,5 @@
 import { buildLogger } from "@/esbuild/plugins/buildLogger";
+import { buildErrorReporter } from "@/esbuild/plugins/buildErrorReporter";
 import { cleanDist } from "@/esbuild/plugins/cleanDist";
 import { css } from "@/esbuild/plugins/css";
 import { externalGlobal } from "@/esbuild/plugins/externalGlobal";
@@ -9,6 +10,7 @@ export const plugins = {
   css,
   cleanDist,
   buildLogger,
+  buildErrorReporter,
   externalGlobal,
   wrapWithLoader,
   spicetifyHandler,

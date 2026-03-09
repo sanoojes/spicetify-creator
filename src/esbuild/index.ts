@@ -49,7 +49,7 @@ export const getCommonPlugins = (
   const { template, minify, cache, buildOptions, outFiles, server, dev } = opts;
 
   const inline = !dev && template === "extension";
-  return [
+  const p = [
     ...plugins.css({
       minify,
       inline,
@@ -79,6 +79,10 @@ export const getCommonPlugins = (
 
     plugins.buildLogger({ cache }),
   ];
+  if (dev) {
+    p.push(plugins.buildErrorReporter({ server }));
+  }
+  return p;
 };
 
 export function getEntryPoints(config: Config) {

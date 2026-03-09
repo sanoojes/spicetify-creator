@@ -110,7 +110,7 @@ export const injectHMRCustomApp = async (
     const { code: transformedIndexCode } = await transform(hmrCustomAppIndex, {
       loader: "js",
       define: {
-        _IMPORT_LINK: JSON.stringify(`${rootLink}/files/outFiles.js`),
+        _IMPORT_LINK: JSON.stringify(`${rootLink}/files/${outFiles.js}`),
       },
       platform: "browser",
     });

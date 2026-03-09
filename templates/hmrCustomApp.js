@@ -8,7 +8,7 @@ const waitForImport = async (retryCount = 0) => {
   } catch (err) {
     console.error("Failed to import app:", err);
     if (retryCount < 3) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       return waitForImport(retryCount + 1);
     }
     return null;
@@ -23,7 +23,8 @@ const styles = {
     justifyContent: "center",
     height: "100%",
     width: "100%",
-    background: "radial-gradient(circle at top left, rgba(29, 185, 84, 0.15), transparent 50%), var(--spice-main, #121212)",
+    background:
+      "radial-gradient(circle at top left, rgba(29, 185, 84, 0.15), transparent 50%), var(--spice-main, #121212)",
     color: "var(--spice-text, #ffffff)",
     fontFamily: "var(--font-family, Circular, Helvetica, Arial, sans-serif)",
   },
@@ -101,21 +102,63 @@ const styles = {
     textTransform: "uppercase",
     letterSpacing: "0.1em",
     transition: "all 0.2s ease",
-  }
+  },
 };
 
-const AlertIcon = () => rc("svg", { width: "32", height: "32", viewBox: "0 0 24 24", fill: "none", stroke: "rgba(241, 94, 108, 0.9)", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-  rc("path", { d: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" }),
-  rc("line", { x1: "12", y1: "9", x2: "12", y2: "13" }),
-  rc("line", { x1: "12", y1: "17", x2: "12.01", y2: "17" })
-);
+const AlertIcon = () =>
+  rc(
+    "svg",
+    {
+      width: "32",
+      height: "32",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "rgba(241, 94, 108, 0.9)",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+    },
+    rc("path", {
+      d: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
+    }),
+    rc("line", { x1: "12", y1: "9", x2: "12", y2: "13" }),
+    rc("line", { x1: "12", y1: "17", x2: "12.01", y2: "17" }),
+  );
 
-const Spinner = () => rc("svg", { width: "48", height: "48", viewBox: "0 0 50 50" },
-  rc("circle", { cx: "25", cy: "25", r: "20", fill: "none", stroke: "rgba(255,255,255,0.1)", strokeWidth: "4" }),
-  rc("circle", { cx: "25", cy: "25", r: "20", fill: "none", stroke: "rgba(255,255,255,0.8)", strokeWidth: "4", strokeDasharray: "30 100", strokeLinecap: "round" },
-    rc("animateTransform", { attributeName: "transform", type: "rotate", from: "0 25 25", to: "360 25 25", dur: "1s", repeatCount: "indefinite" })
-  )
-);
+const Spinner = () =>
+  rc(
+    "svg",
+    { width: "48", height: "48", viewBox: "0 0 50 50" },
+    rc("circle", {
+      cx: "25",
+      cy: "25",
+      r: "20",
+      fill: "none",
+      stroke: "rgba(255,255,255,0.1)",
+      strokeWidth: "4",
+    }),
+    rc(
+      "circle",
+      {
+        cx: "25",
+        cy: "25",
+        r: "20",
+        fill: "none",
+        stroke: "rgba(255,255,255,0.8)",
+        strokeWidth: "4",
+        strokeDasharray: "30 100",
+        strokeLinecap: "round",
+      },
+      rc("animateTransform", {
+        attributeName: "transform",
+        type: "rotate",
+        from: "0 25 25",
+        to: "360 25 25",
+        dur: "1s",
+        repeatCount: "indefinite",
+      }),
+    ),
+  );
 
 const RetryButton = ({ onClick }) => {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -123,37 +166,54 @@ const RetryButton = ({ onClick }) => {
 
   const dynamicStyle = {
     ...styles.buttonBase,
-    backgroundColor: isActive ? "rgba(255, 255, 255, 0.15)" : isHovered ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.05)",
+    backgroundColor: isActive
+      ? "rgba(255, 255, 255, 0.15)"
+      : isHovered
+        ? "rgba(255, 255, 255, 0.1)"
+        : "rgba(255, 255, 255, 0.05)",
     borderColor: isHovered ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.1)",
     transform: isActive ? "scale(0.96)" : isHovered ? "scale(1.02)" : "scale(1)",
     boxShadow: isHovered ? "0 4px 12px rgba(0,0,0,0.2)" : "none",
   };
 
-  return rc("button", {
-    style: dynamicStyle,
-    onClick,
-    onMouseEnter: () => setIsHovered(true),
-    onMouseLeave: () => { setIsHovered(false); setIsActive(false); },
-    onMouseDown: () => setIsActive(true),
-    onMouseUp: () => setIsActive(false),
-  }, "Try Again");
+  return rc(
+    "button",
+    {
+      style: dynamicStyle,
+      onClick,
+      onMouseEnter: () => setIsHovered(true),
+      onMouseLeave: () => {
+        setIsHovered(false);
+        setIsActive(false);
+      },
+      onMouseDown: () => setIsActive(true),
+      onMouseUp: () => setIsActive(false),
+    },
+    "Try Again",
+  );
 };
 
-const Loading = () => rc("div", { style: styles.container },
-  rc(Spinner),
-  rc("div", { style: styles.loadingText }, "Loading app...")
-);
+const Loading = () =>
+  rc(
+    "div",
+    { style: styles.container },
+    rc(Spinner),
+    rc("div", { style: styles.loadingText }, "Loading app..."),
+  );
 
-const ErrorDisplay = ({ message, onRetry }) => rc("div", { style: styles.container },
-  rc("div", { style: styles.errorContainer },
-    rc("div", { style: styles.iconContainer }, rc(AlertIcon)),
-    rc("div", { style: styles.errorTitle }, "Failed to load app"),
-    rc("div", { style: styles.errorTraceBox },
-      rc("p", { style: styles.errorMessage }, message)
+const ErrorDisplay = ({ message, onRetry }) =>
+  rc(
+    "div",
+    { style: styles.container },
+    rc(
+      "div",
+      { style: styles.errorContainer },
+      rc("div", { style: styles.iconContainer }, rc(AlertIcon)),
+      rc("div", { style: styles.errorTitle }, "Failed to load app"),
+      rc("div", { style: styles.errorTraceBox }, rc("p", { style: styles.errorMessage }, message)),
+      rc(RetryButton, { onClick: onRetry }),
     ),
-    rc(RetryButton, { onClick: onRetry })
-  )
-);
+  );
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -162,7 +222,11 @@ class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, errorMessage: error.stack || error.message || "A runtime error occurred in the app component." };
+    return {
+      hasError: true,
+      errorMessage:
+        error.stack || error.message || "A runtime error occurred in the app component.",
+    };
   }
 
   componentDidCatch(error, errorInfo) {
@@ -176,7 +240,7 @@ class ErrorBoundary extends React.Component {
         onRetry: () => {
           this.setState({ hasError: false, errorMessage: null });
           if (this.props.onRetry) this.props.onRetry();
-        }
+        },
       });
     }
     return this.props.children;

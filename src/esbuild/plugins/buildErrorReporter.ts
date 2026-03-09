@@ -1,4 +1,4 @@
-import type { Plugin, BuildResult, Message } from "esbuild";
+import type { Plugin, BuildResult } from "esbuild";
 import type { HMRMessage } from "@/dev/server/types";
 
 export type BuildErrorReporterOptions = {

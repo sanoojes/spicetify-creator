@@ -5,7 +5,7 @@ import { CHECK, CROSS } from "@/constants";
 import { pc, urlSlugify } from "@/utils/common";
 import { mkdirp } from "@/utils/fs";
 import { getSpicetifyConfig, getExtensionDir, getCustomAppsDir, runSpice } from "@/utils/spicetify";
-import { liveReloadFilePath } from "@/metadata";
+import { liveReloadFilePath, hmrCustomAppFilePath } from "@/metadata";
 import { logger } from "@/utils/logger";
 import type { OutFiles } from "@/esbuild";
 import type { Config } from "@/config/schema";
@@ -106,51 +106,16 @@ export const injectHMRCustomApp = async (
     const indexJsPath = resolve(destDir, "index.js");
     const extensionJsPath = resolve(destDir, outFiles.jsExtension ?? "extension.js");
 
-    const indexCode = `const React = Spicetify.React;
-const waitForImport = () => {
-  return import("${rootLink}/files/${outFiles.js}")
-    .then((mod) => mod.default || mod.render)
-    .catch((err) => {
-      console.error("Failed to import app:", err);
-      return null;
-    });
-};
-
-const AppWrapper = ({ appPromise }) => {
-  const [App, setApp] = React.useState(null);
-
-  React.useEffect(() => {
-    let mounted = true;
-
-    appPromise.then((app) => {
-      if (mounted && app) {
-        setApp(() => app);
-      }
+    const hmrCustomAppIndex = readFileSync(hmrCustomAppFilePath, "utf8");
+    const { code: transformedIndexCode } = await transform(hmrCustomAppIndex, {
+      loader: "js",
+      define: {
+        _IMPORT_LINK: JSON.stringify(`${rootLink}/files/outFiles.js`),
+      },
+      platform: "browser",
     });
 
-    return () => {
-      mounted = false;
-    };
-  }, [appPromise]);
-
-  if (!App) {
-    return React.createElement(
-      "div",
-      { className: "loading" },
-      "Loading app..."
-    );
-  }
-
-  return React.createElement(App);
-};
-
-const render = () => {
-  const appPromise = waitForImport();
-  return React.createElement(AppWrapper, { appPromise });
-};
-`;
-
-    writeFileSync(indexJsPath, indexCode);
+    writeFileSync(indexJsPath, transformedIndexCode);
 
     const sourceCode = readFileSync(liveReloadFilePath, "utf8");
 

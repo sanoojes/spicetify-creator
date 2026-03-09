@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { writeFile, unlink } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import type { Plugin } from "esbuild";
 import type { Config } from "@/config/schema";
@@ -32,6 +32,63 @@ export type BuildHandlerOptions = {
   logger?: Logger;
 };
 
+async function removeFile(logger: Logger, targetPath: string): Promise<void> {
+  try {
+    await unlink(targetPath);
+    logger.debug(pc.green(`${CHECK} Removed: ${targetPath}`));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      logger.error(
+        pc.red(
+          `${CROSS} Failed to remove file: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
+    }
+  }
+}
+
+async function copyFiles(
+  logger: Logger,
+  destDirs: string[],
+  cacheFiles: Map<string, { contents: Uint8Array }>,
+): Promise<void> {
+  const tasks: Promise<void>[] = [];
+
+  for (const filePath of cacheFiles.keys()) {
+    const fileData = cacheFiles.get(filePath);
+    if (!fileData) continue;
+
+    for (const destDir of destDirs) {
+      const targetPath = resolve(destDir, basename(filePath));
+      tasks.push(
+        (async () => {
+          await mkdirp(destDir);
+          await writeFile(targetPath, fileData.contents);
+        })(),
+      );
+    }
+  }
+
+  await Promise.all(tasks);
+}
+
+async function removeDeletedFiles(
+  logger: Logger,
+  destDirs: string[],
+  removedFiles: Set<string>,
+): Promise<void> {
+  const tasks: Promise<void>[] = [];
+
+  for (const removedPath of removedFiles) {
+    for (const destDir of destDirs) {
+      const targetPath = resolve(destDir, basename(removedPath));
+      tasks.push(removeFile(logger, targetPath));
+    }
+  }
+
+  await Promise.all(tasks);
+}
+
 export const spicetifyHandler = ({
   config,
   options,
@@ -51,38 +108,37 @@ export const spicetifyHandler = ({
       ? `${urlSlugify(config.name)}.js`
       : urlSlugify(getEnName(config.name));
 
+    const getDestDirs = (): string[] => {
+      const dirs = [resolve(outDir)];
+      if (copy) {
+        dirs.push(
+          isExtension
+            ? getExtensionDir()
+            : isCustomApp
+              ? resolve(getCustomAppsDir(), identifier)
+              : resolve(getThemesDir(), identifier),
+        );
+      }
+      return dirs;
+    };
+
     if (env.skipSpicetify) {
       logger.info(pc.yellow("skipping spicetify operations"));
 
       build.onEnd(async (result) => {
         if (result.errors.length > 0) return;
-        if (!cache.hasChanges || cache.changed.size === 0) return;
 
-        const tasks: Promise<void>[] = [];
+        const destDirs = getDestDirs();
 
-        for (const filePath of cache.changed) {
-          const fileData = cache.files.get(filePath);
-          if (!fileData) continue;
+        await copyFiles(logger, destDirs, cache.files);
+        logger.debug(pc.green(`${CHECK} Built files written to ${outDir}`));
 
-          const targetPath = resolve(outDir, basename(filePath));
-          tasks.push(
-            (async () => {
-              await mkdirp(outDir);
-              await writeFile(targetPath, fileData.contents);
-            })(),
-          );
+        if (cache.removed.size > 0) {
+          await removeDeletedFiles(logger, destDirs, cache.removed);
+          cache.hasChanges = true;
         }
 
-        try {
-          await Promise.all(tasks);
-          logger.debug(pc.green(`${CHECK} Built files written to ${outDir}`));
-        } catch (err) {
-          logger.error(
-            pc.red(
-              `${CROSS} Failed to write files: ${err instanceof Error ? err.message : String(err)}`,
-            ),
-          );
-        }
+        cache.removed.clear();
       });
 
       return;
@@ -116,41 +172,10 @@ export const spicetifyHandler = ({
     build.onEnd(async (result) => {
       if (result.errors.length > 0) return;
 
-      if (!cache.hasChanges || cache.changed.size === 0) {
-        return;
-      }
-
-      const destDirs = [resolve(outDir)];
-      if (copy) {
-        destDirs.push(
-          isExtension
-            ? getExtensionDir()
-            : isCustomApp
-              ? resolve(getCustomAppsDir(), identifier)
-              : resolve(getThemesDir(), identifier),
-        );
-      }
-
-      const tasks: Promise<void>[] = [];
-
-      for (const filePath of cache.changed) {
-        const fileData = cache.files.get(filePath);
-        if (!fileData) continue;
-
-        for (const destDir of destDirs) {
-          const targetPath = resolve(destDir, basename(filePath));
-
-          tasks.push(
-            (async () => {
-              await mkdirp(destDir);
-              await writeFile(targetPath, fileData.contents);
-            })(),
-          );
-        }
-      }
+      const destDirs = getDestDirs();
 
       try {
-        await Promise.all(tasks);
+        await copyFiles(logger, destDirs, cache.files);
         logger.debug(pc.green(`${CHECK} Changed files copied.`));
       } catch (err) {
         logger.error(
@@ -160,6 +185,13 @@ export const spicetifyHandler = ({
         );
         return;
       }
+
+      if (cache.removed.size > 0) {
+        await removeDeletedFiles(logger, destDirs, cache.removed);
+        cache.hasChanges = true;
+      }
+
+      cache.removed.clear();
 
       const shouldApply = apply && cache.hasChanges && (!applyOnce || !hasAppliedOnce);
 

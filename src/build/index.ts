@@ -61,12 +61,6 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
 
   const outDir = resolve(config.outDir);
 
-  // to use in the plugins
-  const cache: BuildCache = {
-    files: new Map(),
-    changed: new Set(),
-    hasChanges: true,
-  };
   const outFiles = getOutFiles(config);
 
   const overrides: BuildOptions = {
@@ -91,7 +85,6 @@ function getJSBuildOptions(config: Config, options: BuildCLIOptions): BuildOptio
       ...getCommonPlugins({
         ...config,
         minify,
-        cache,
         buildOptions: {
           apply: options.apply,
           copy: options.copy,

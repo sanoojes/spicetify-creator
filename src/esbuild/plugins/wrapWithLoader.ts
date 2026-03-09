@@ -51,18 +51,48 @@ export function wrapWithLoader({
         throw new Error(`[${namespace}] This plugin requires "write: false" in build options.`);
       }
 
+      build.onStart(() => {
+        cache.changed.clear();
+        cache.removed.clear();
+        cache.hasChanges = false;
+      });
+
       build.onEnd(async (res: BuildResult) => {
         try {
           if (res.errors.length > 0 || !res.outputFiles) return;
 
-          cache.changed.clear();
-          cache.hasChanges = false;
           const filesChanged: string[] = [];
 
           const outdir = resolve(build.initialOptions.outdir || "./dist");
           const bundledCss = getBundledCss(res.outputFiles, outdir, type, dev);
           const minify = build.initialOptions.minify;
           const slug = varSlugify(`${name}_${version}`);
+
+          const currentFilePaths = new Set<string>();
+          for (const file of res.outputFiles) {
+            const isJs = file.path.endsWith(".js");
+            const isCss = file.path.endsWith(".css");
+            if (!dev && isCss && type === "extension") continue;
+            const relPath = file.path.slice(outdir.length);
+            const isCustomAppExtension = type === "custom-app" && isExtensionDir(relPath);
+            let targetName: string | undefined;
+            if (isJs) {
+              targetName = isCustomAppExtension
+                ? (outFiles.jsExtension ?? "extension.js")
+                : outFiles.js;
+            } else if (isCss && !isCustomAppExtension) {
+              targetName = outFiles.css;
+            }
+            if (targetName) {
+              currentFilePaths.add(join(outdir, targetName));
+            }
+          }
+
+          for (const cachedPath of cache.files.keys()) {
+            if (!currentFilePaths.has(cachedPath)) {
+              cache.removed.add(cachedPath);
+            }
+          }
 
           const transformPromises = res.outputFiles.map(async (file) => {
             const isJs = file.path.endsWith(".js");

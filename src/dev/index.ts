@@ -71,12 +71,6 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
 
   const minify = false;
 
-  // to use btw the plugins
-  const cache: BuildCache = {
-    files: new Map(),
-    changed: new Set(),
-    hasChanges: true,
-  };
   const overrides: BuildOptions = {
     ...defaultBuildOptions,
     outdir: outDir,
@@ -97,7 +91,6 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
       ...getCommonPlugins({
         ...config,
         minify,
-        cache,
         buildOptions: {
           copy: true,
           apply: false,

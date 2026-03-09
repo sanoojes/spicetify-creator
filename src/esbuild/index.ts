@@ -22,6 +22,7 @@ export type File = {
 export type BuildCache = {
   files: Map<string, File>;
   changed: Set<string>;
+  removed: Set<string>;
   hasChanges: boolean;
 };
 
@@ -39,21 +40,31 @@ export const defaultBuildOptions: Partial<BuildOptions> = {
 export const getCommonPlugins = (
   opts: Config & {
     minify: boolean;
-    cache: BuildCache;
     buildOptions: HandlerOpts;
     outFiles: OutFiles;
     server?: HMRServer;
     dev?: boolean;
   },
 ): Plugin[] => {
-  const { template, minify, cache, buildOptions, outFiles, server, dev } = opts;
+  const { template, minify, buildOptions, outFiles, server, dev } = opts;
 
   const inline = !dev && template === "extension";
+
+  // to use btw the plugins
+  const cache: BuildCache = {
+    files: new Map(),
+    changed: new Set(),
+    removed: new Set(),
+    hasChanges: true,
+  };
+
   const p = [
     ...plugins.css({
       minify,
       inline,
     }),
+
+    plugins.clean(cache),
 
     plugins.externalGlobal({
       react: "Spicetify.React",

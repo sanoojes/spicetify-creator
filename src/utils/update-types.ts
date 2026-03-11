@@ -17,6 +17,7 @@ const downloads: Record<string, Download> = {
       content
         .replace("const React: any;", 'const React: typeof import("react");')
         .replace("const ReactDOM: any;", 'const ReactDOM: typeof import("react-dom/client");')
+        .replace("const ReactJSX: any;", 'const ReactJSX: typeof import("react/jsx-runtime");')
         .replace(
           "const ReactDOMServer: any;",
           'const ReactDOMServer: typeof import("react-dom/server");',

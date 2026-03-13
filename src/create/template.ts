@@ -89,7 +89,11 @@ export const SHARED_FILES: FileSlice = (opts) => {
 };
 export const LANGUAGE_FILES: FileRegistry<Options["language"]> = {
   js: [{ from: "jsconfig.json", to: "jsconfig.json", isShared: true }],
-  ts: [{ from: "tsconfig.json", to: "tsconfig.json", isShared: true }],
+  ts: [
+    { from: "tsconfig.json", to: "tsconfig.json", isShared: true },
+    { from: "tsconfig.app.json", to: "tsconfig.app.json", isShared: true },
+    { from: "tsconfig.node.json", to: "tsconfig.node.json", isShared: true },
+  ],
 };
 
 export const FRAMEWORKS: FileRegistry<Options["framework"]> = {

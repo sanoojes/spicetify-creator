@@ -1,6 +1,6 @@
 import "@/app.css";
 import { createRoot } from "react-dom/client";
-// you can use aliases too ! (just add them to tsconfig.json)
+// you can use aliases too ! (checkout tsconfig.app.json)
 import OnboardingCard from "@/components/Onboarding";
 
 const config = {

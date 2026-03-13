@@ -87,6 +87,12 @@ export function createPackageJSON(options: Options): PackageJSON {
   };
 
   if (options.language === "ts") {
+    result.devDependencies = {
+      ...result.devDependencies,
+      ...(options.packageManager === "bun"
+        ? { "@types/bun": "^1.3.10" }
+        : { "@types/node": "^25.5.0" }),
+    };
     result.peerDependencies = {
       ...result.peerDependencies,
       typescript: "^5",

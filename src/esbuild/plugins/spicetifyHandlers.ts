@@ -123,49 +123,31 @@ export const spicetifyHandler = ({
     };
 
     if (env.skipSpicetify) {
-      logger.info(pc.yellow("skipping spicetify operations"));
+      logger.info(pc.yellow("Skipping Spicetify operations..."));
+    } else {
+      const spiceConfig = await getSpicetifyConfig();
+      logger.debug(pc.green("Spicetify Config: "), spiceConfig);
 
-      build.onEnd(async (result) => {
-        if (result.errors.length > 0) return;
+      if (apply) {
+        const defaultTheme = spiceConfig?.Setting?.current_theme || "SpicetifyDefault";
+        const spiceIdentifier = remove ? `${identifier}-` : identifier;
+        const var_name = isExtension ? "extensions" : isCustomApp ? "custom_apps" : "current_theme";
 
-        const destDirs = getDestDirs();
+        runSpice(["config", var_name, spiceIdentifier]);
 
-        await copyFiles(logger, destDirs, cache.files);
-        logger.debug(pc.green(`${CHECK} Built files written to ${outDir}`));
+        if (!isExtension && !remove) {
+          const cleanup = () => {
+            if (isCustomApp) {
+              runSpice(["config", "custom_apps", `${identifier}-`]);
+            } else {
+              runSpice(["config", "current_theme", defaultTheme]);
+            }
+            process.exit();
+          };
 
-        if (cache.removed.size > 0) {
-          await removeDeletedFiles(logger, destDirs, cache.removed);
-          cache.hasChanges = true;
+          process.once("SIGINT", cleanup);
+          process.once("SIGTERM", cleanup);
         }
-
-        cache.removed.clear();
-      });
-
-      return;
-    }
-
-    const spiceConfig = await getSpicetifyConfig();
-    logger.debug(pc.green("Spicetify Config: "), spiceConfig);
-
-    if (apply) {
-      const defaultTheme = spiceConfig?.Setting?.current_theme || "SpicetifyDefault";
-
-      const spiceIdentifier = remove ? `${identifier}-` : identifier;
-      const var_name = isExtension ? "extensions" : isCustomApp ? "custom_apps" : "current_theme";
-      runSpice(["config", var_name, spiceIdentifier]);
-
-      if (!isExtension && !remove) {
-        const cleanup = () => {
-          if (isCustomApp) {
-            runSpice(["config", "custom_apps", `${identifier}-`]);
-          } else {
-            runSpice(["config", "current_theme", defaultTheme]);
-          }
-          process.exit();
-        };
-
-        process.once("SIGINT", cleanup);
-        process.once("SIGTERM", cleanup);
       }
     }
 
@@ -176,7 +158,7 @@ export const spicetifyHandler = ({
 
       try {
         await copyFiles(logger, destDirs, cache.files);
-        logger.debug(pc.green(`${CHECK} Changed files copied.`));
+        logger.debug(pc.green(`${CHECK} Built files written to ${outDir}`));
       } catch (err) {
         logger.error(
           pc.red(
@@ -192,6 +174,8 @@ export const spicetifyHandler = ({
       }
 
       cache.removed.clear();
+
+      if (env.skipSpicetify) return;
 
       const shouldApply = apply && cache.hasChanges && (!applyOnce || !hasAppliedOnce);
 

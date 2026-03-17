@@ -7,6 +7,9 @@ import { type SpicetifyConfig, SpicetifyConfigSchema } from "@/utils/spicetify/s
 import { env } from "@/env";
 
 export function runSpice(args: string[]) {
+  if (env.skipSpicetify) {
+    throw new Error("Spicetify operations are disabled in CI");
+  }
   validateSpicetify(env.spicetifyBin);
   return spawnSync(env.spicetifyBin, args, { encoding: "utf-8" });
 }
@@ -35,6 +38,9 @@ export const getSpotifyDirs = async (path?: string): Promise<SpotifyDIRs> => {
 };
 
 export async function getSpicetifyConfig(): Promise<SpicetifyConfig> {
+  if (env.skipSpicetify) {
+    throw new Error("Spicetify operations are disabled in CI");
+  }
   const { stdout, stderr, error } = runSpice(["path", "-c"]);
   if (error || stderr) {
     throw new Error(`Failed to locate Spicetify config: ${stderr || error?.message}`);
@@ -51,6 +57,9 @@ export async function getSpicetifyConfig(): Promise<SpicetifyConfig> {
 }
 
 export function getSpiceDataPath(): string {
+  if (env.skipSpicetify) {
+    throw new Error("Spicetify operations are disabled in CI");
+  }
   const { stdout, stderr, error } = runSpice(["path", "userdata"]);
   if (error || stderr) {
     throw new Error(`Failed to locate Spicetify config: ${stderr || error?.message}`);
@@ -59,6 +68,9 @@ export function getSpiceDataPath(): string {
 }
 
 export function validateSpicetify(bin: string) {
+  if (env.skipSpicetify) {
+    return;
+  }
   const result = spawnSync(bin, ["--version"], { encoding: "utf-8" });
 
   if (result.error) {

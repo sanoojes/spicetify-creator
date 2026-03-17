@@ -110,7 +110,7 @@ export const spicetifyHandler = ({
 
     const getDestDirs = (): string[] => {
       const dirs = [resolve(outDir)];
-      if (copy) {
+      if (copy && !env.skipSpicetify) {
         dirs.push(
           isExtension
             ? getExtensionDir()

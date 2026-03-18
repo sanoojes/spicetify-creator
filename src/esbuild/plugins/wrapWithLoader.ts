@@ -66,7 +66,6 @@ export function wrapWithLoader({
           const outdir = resolve(build.initialOptions.outdir || "./dist");
           const bundledCss = getBundledCss(res.outputFiles, outdir, type, dev);
           const minify = build.initialOptions.minify;
-          const slug = varSlugify(`${name}_${version}`);
 
           const currentFilePaths = new Set<string>();
           for (const file of res.outputFiles) {
@@ -212,7 +211,6 @@ export function wrapWithLoader({
               define: {
                 __ESBUILD__HAS_CSS: JSON.stringify(type !== "theme" && bundledCss.length !== 0), // TODO: remove
                 __ESBUILD__INJECTED_CSS: JSON.stringify(bundledCss),
-                __ESBUILD__APP_SLUG: JSON.stringify(slug),
                 __ESBUILD__APP_TYPE: JSON.stringify(type),
                 __ESBUILD__APP_ID: JSON.stringify(varSlugify(name)),
                 __ESBUILD__APP_VERSION: JSON.stringify(version),

@@ -6,16 +6,9 @@ __ESBUILD__HAS_CSS &&
       style.setAttribute("data-app", __ESBUILD__APP_ID);
       style.textContent = css;
       document.head.appendChild(style);
-    } catch {}
+    } catch { }
   })();
 (async () => {
-  const _ID = `${__ESBUILD__APP_SLUG}-${__ESBUILD__APP_TYPE}`;
-  if (!window.SpiceGlobals) window.SpiceGlobals = {};
-  window.SpiceGlobals[_ID] = {
-    id: __ESBUILD__APP_ID,
-    version: __ESBUILD__APP_VERSION,
-  };
-  const { id: appId, version: v } = window.SpiceGlobals[_ID];
   const _wait = (p, a = 0) =>
     new Promise((res, rej) => {
       const i = setInterval(() => {
@@ -29,7 +22,7 @@ __ESBUILD__HAS_CSS &&
     if (S.Events?.webpackLoaded?.on) await new Promise((r) => S.Events.webpackLoaded.on(r));
     await _wait(() => S?.React && S?.ReactJSX && S?.ReactDOM && S?.Platform && S?.Player);
     // oxfmt-ignore
-    console.info(`%c[${appId}] %cv${v} %cinitialized`, "color: #1DB954; font-weight: bold", "color: #888", "color: unset");
+    console.info(`%c[${__ESBUILD__APP_ID}:${__ESBUILD__APP_TYPE}] %cv${__ESBUILD__APP_VERSION} %cinitialized`, "color: #1DB954; font-weight: bold", "color: #888", "color: unset");
     // oxfmt-ignore
     "{{INJECT_START_COMMENT}}"
       (async function () {

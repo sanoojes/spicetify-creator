@@ -5,7 +5,7 @@ import { watchConfig } from "c12";
 import { globSync } from "tinyglobby";
 import { type Config, type FileConfig, OptionsSchema } from "@/config/schema";
 import { getPackageManager } from "@/utils/package-manager";
-import { pc, urlSlugify } from "@/utils/common";
+import { pc, urlSlugify, varSlugify } from "@/utils/common";
 import { createLogger } from "@/utils/logger";
 import { runSpice } from "@/utils/spicetify";
 import { ENTRY_MAP, ICON_ACTIVE_GLOBS, ICON_GLOBS, type EntryType } from "@/config/globs";
@@ -95,6 +95,10 @@ async function resolveContext(config: FileConfig): Promise<FileConfig> {
   config.outDir = resolve(cwd, config.outDir || "./dist");
   config.esbuildOptions ??= {};
   config.serverConfig ??= {};
+
+  if (config.template === "extension") {
+    config.cssId ??= `${varSlugify(getEnName(config.name!))}_styles`;
+  }
 
   if (config.template === "custom-app") {
     config.icon ??= {

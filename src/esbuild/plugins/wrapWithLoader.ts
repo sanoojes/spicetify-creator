@@ -210,7 +210,7 @@ export function wrapWithLoader({
               target: build.initialOptions.target || "es2020",
               loader: "jsx",
               define: {
-                __ESBUILD__HAS_CSS: JSON.stringify(type !== "theme"),
+                __ESBUILD__HAS_CSS: JSON.stringify(type !== "theme" && bundledCss.length !== 0), // TODO: remove
                 __ESBUILD__INJECTED_CSS: JSON.stringify(bundledCss),
                 __ESBUILD__APP_SLUG: JSON.stringify(slug),
                 __ESBUILD__APP_TYPE: JSON.stringify(type),

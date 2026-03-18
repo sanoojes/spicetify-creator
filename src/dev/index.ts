@@ -45,7 +45,7 @@ export async function dev(options: DevCLIOptions) {
       if (config.template === "custom-app") {
         await injectHMRCustomApp(server.link, server.wsLink, outFiles, config);
       } else {
-        await injectHMRExtension(server.link, server.wsLink, outFiles);
+        await injectHMRExtension(server.link, server.wsLink, outFiles, config);
       }
 
       ctx = await context(getJSDevOptions(config, { ...options, outFiles, server }));

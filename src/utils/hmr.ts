@@ -11,7 +11,12 @@ import type { OutFiles } from "@/esbuild";
 import type { Config } from "@/config/schema";
 import { getEnName } from "@/config";
 
-export const injectHMRExtension = async (rootLink: string, wsLink: string, outFiles: OutFiles) => {
+export const injectHMRExtension = async (
+  rootLink: string,
+  wsLink: string,
+  outFiles: OutFiles,
+  config: Config,
+) => {
   const extName = `sc-live-reload-helper.js`;
   const spiceConfig = await getSpicetifyConfig();
 
@@ -46,6 +51,12 @@ export const injectHMRExtension = async (rootLink: string, wsLink: string, outFi
         _HOT_RELOAD_LINK: JSON.stringify(wsLink),
         _JS_PATH: JSON.stringify(`/files/${outFiles.js}`),
         _CSS_PATH: JSON.stringify(outFiles.css ? `/files/${outFiles.css}` : `/files/app.css`),
+        _REMOVE_CMD: JSON.stringify(
+          `spicetify config extensions sc-live-reload-helper.js- && spicetify apply`,
+        ),
+        _CSS_ID: JSON.stringify(
+          config.template === "extension" && config.cssId ? config.cssId : "sc-injected-css",
+        ),
       },
     });
 
@@ -126,6 +137,9 @@ export const injectHMRCustomApp = async (
         _HOT_RELOAD_LINK: JSON.stringify(wsLink),
         _JS_PATH: JSON.stringify(`/files/${outFiles.jsExtension ?? "extension.js"}`),
         _CSS_PATH: JSON.stringify(outFiles.css ? `/files/${outFiles.css}` : `/files/app.css`),
+        _REMOVE_CMD: JSON.stringify(
+          `spicetify config custom_apps ${customAppId}- && spicetify apply`,
+        ),
       },
     });
 

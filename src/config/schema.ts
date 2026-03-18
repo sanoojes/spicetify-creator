@@ -37,6 +37,7 @@ const LocaleNameSchema = v.intersect([
 const ExtensionTemplateSchema = v.object({
   name: v.string(),
   template: v.literal("extension"),
+  cssId: v.optional(v.string()),
   entry: EntryFileSchema,
 });
 

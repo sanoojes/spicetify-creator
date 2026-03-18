@@ -99,3 +99,4 @@ export const liveReloadFilePath = dist(`templates/liveReload.js`, import.meta.ur
 export const hmrCustomAppFilePath = dist(`templates/hmrCustomApp.js`, import.meta.url);
 export const templateWrapperFilePath = dist("templates/wrapper.js", import.meta.url);
 export const customAppEntryFilePath = dist("templates/customAppEntry.js", import.meta.url);
+export const injectCSSFilePath = dist("templates/injectCSS.js", import.meta.url);

@@ -62,6 +62,7 @@ export const getCommonPlugins = (
     ...plugins.css({
       minify,
       inline,
+      styleId: template === "extension" && opts.cssId ? opts.cssId : null,
     }),
 
     plugins.clean(cache),

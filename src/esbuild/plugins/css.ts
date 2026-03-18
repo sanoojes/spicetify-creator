@@ -4,17 +4,18 @@ import autoprefixer from "autoprefixer";
 import type { Plugin } from "esbuild";
 import { sassPlugin, postcssModules } from "esbuild-sass-plugin";
 import { resolve } from "node:path";
-
 import postcss from "postcss";
 import postcssImport from "postcss-import";
 import postcssPresetEnv from "postcss-preset-env";
+import { inlineBundledCss } from "@/esbuild/plugins/inlineBundledCss";
 
-type CSSPlugin = { minify: boolean; inline: boolean; logger: Logger };
+type CSSPlugin = { minify: boolean; inline: boolean; logger: Logger; styleId: string | null };
 
 export function css({
   minify = false,
   inline = false,
   logger = createLogger("plugin:css"),
+  styleId = null,
 }: Partial<CSSPlugin> = {}): Plugin[] {
   const projectRoot = process.cwd();
 
@@ -25,9 +26,9 @@ export function css({
     ...(minify ? [postcssMinify()] : []),
   ];
 
-  const type = inline ? "style" : "css";
+  const type = inline ? (styleId ? "css" : "style") : "css";
 
-  return [
+  const plugins: Plugin[] = [
     sassPlugin({
       filter: /\.module\.(s[ac]ss|css)$/,
       type,
@@ -45,7 +46,6 @@ export function css({
       type,
       async transform(css, _resolveDir, filePath) {
         const start = performance.now();
-
         logger.log("processing:", filePath, "type:", type);
 
         const result = await postcss(postCssPlugins).process(css, {
@@ -61,4 +61,10 @@ export function css({
       },
     }),
   ];
+
+  if (inline && styleId) {
+    plugins.push(inlineBundledCss(styleId));
+  }
+
+  return plugins;
 }

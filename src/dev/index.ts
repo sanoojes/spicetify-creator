@@ -93,8 +93,7 @@ function getJSDevOptions(config: Config, options: GetDevOptions): BuildOptions {
         minify,
         buildOptions: {
           copy: true,
-          apply: false,
-          applyOnce: false,
+          apply: true,
           remove: config.template !== "custom-app",
           outDir,
         },

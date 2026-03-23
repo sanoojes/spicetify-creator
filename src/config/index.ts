@@ -46,12 +46,23 @@ export async function loadConfig(cb: ConfigCallback) {
     defaults: CONFIG_DEFAULTS,
     configFileRequired: true,
     packageJson: true,
-    async onUpdate({ newConfig }) {
+    async onUpdate({ oldConfig, newConfig }) {
       try {
-        const resolved = await getResolvedConfig(newConfig.config, { exitOnError: false });
-        await runCb(resolved, true);
-      } catch {
+        logger.debug("Config update triggered", { oldConfig, newConfig });
+        const resolved = await getResolvedConfig(newConfig.config as FileConfig, {
+          exitOnError: false,
+        });
+        logger.debug("Resolved config", { resolved });
+        try {
+          await runCb(resolved, true);
+        } catch (error) {
+          logger.error(error);
+        }
+      } catch (err) {
         logger.error(pc.red("Config validation failed, keeping previous configuration"));
+        if (err instanceof Error) {
+          logger.error(pc.dim(" └─ ") + err.message);
+        }
       }
     },
   });

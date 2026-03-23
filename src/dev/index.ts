@@ -9,7 +9,6 @@ import {
   getCommonPlugins,
   getEntryPoints,
   getOutFiles,
-  type BuildCache,
   type OutFiles,
 } from "@/esbuild";
 import { pc } from "@/utils/common";
@@ -30,6 +29,8 @@ export async function dev(options: DevCLIOptions) {
     if (isNewUpdate) {
       logger.clear();
       logger.info(pc.green("Config updated, reloading..."));
+      await server?.stop();
+      server = undefined;
     }
 
     try {

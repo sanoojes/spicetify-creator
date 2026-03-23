@@ -9,7 +9,7 @@ export type ESBuildOptions = Omit<_ESBuildOptions, EsBuildOmitted>;
 
 export const ServerConfigSchema = v.object({
   port: v.optional(v.number()),
-  serveDir: v.string(),
+  serveDir: v.optional(v.string()),
   hmrPath: v.optional(v.string()),
 });
 
